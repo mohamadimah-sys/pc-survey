@@ -87,7 +87,7 @@
       <h2 id="formTitle"></h2>
       <div class="hint" id="formHint"></div>
     </div>
-    <form id="form" onsubmit="return false;"></form>
+    <form id="form" on="return false;"></form>
     <div id="formMsg"></div>
   </section>
 
@@ -435,7 +435,7 @@ function backToList(){
 }
 
 /* ============ ثبت و قفل ============ */
-function submitEval(){
+async function submitEval(){
   if(!currentUser || !curTarget) return;
   const missing = ALL_ITEMS.filter(it=> scores[it.id] === undefined);
   if(missing.length){
@@ -443,22 +443,20 @@ function submitEval(){
       `<div class="msg err">${toFa(missing.length)} شاخص بدون امتیاز مانده است.</div>`;
     return;
   }
-  if(!confirm(`ثبت نهایی؟ پس از ثبت، امکان تغییر وجود ندارد.`)) return;
+  if(!confirm(`ثبت نهایی؟\n\n• ارسال به ایتا\n• پس از ثبت، امکان تغییر وجود ندارد.`)) return;
 
   const ts = new Date().toISOString();
   const isMgr = !!curTarget.isMgr;
   const id = isMgr
     ? `mgr|${currentUser.code}|${curTarget.contractor}`
     : `sup|${curTarget.workshopCode}|${curTarget.contractor}`;
-
   if(isLocked(id)){ alert("قبلاً ثبت شده."); return; }
 
   const rec = {
-    version: 2,
-    id,
+    version: 2, id,
     evaluatorType: isMgr ? "manager" : "supervisor",
     evaluatorCode: isMgr ? currentUser.code : curTarget.workshopCode,
-    supervisor: isMgr ? `${currentUser.role}${currentUser.name && currentUser.name !== currentUser.role ? " — " + currentUser.name : ""}` : currentUser.name,
+    supervisor: isMgr ? `${currentUser.role}` : currentUser.name,
     evaluatorRole: isMgr ? currentUser.role : "رئیس کارگاه",
     contractor: curTarget.contractor,
     workshopCode: isMgr ? null : curTarget.workshopCode,
@@ -471,28 +469,47 @@ function submitEval(){
   };
   rec.hash = recordHash(rec);
 
-  // قفل محلی
   const locks = getLocks();
   locks[id] = { hash:rec.hash, timestamp:ts };
   localStorage.setItem(LS_LOCKS, JSON.stringify(locks));
-
-  // ذخیره برای دانلود مجدد
   const recs = getRecs(); recs[id] = rec; saveRecs(recs);
-
   lastRec = rec;
-  const safe = id.replace(/[|\\/:*?"<>]/g,"_");
-  downloadJSON([rec], `eval_${safe}_${ts.slice(0,10)}.json`);
+
+  const fileName = `نظرسنجی_${rec.supervisor}_${rec.contractor}.json`;
+
+  // 📤 ارسال به ایتا از طریق ورسل
+  let eitaaStatus = "skipped";
+  if(CONFIG.eitaaEndpoint){
+    document.getElementById("formMsg").innerHTML = `<div class="msg warn">⏳ در حال ارسال به ایتا...</div>`;
+    try {
+      const res = await fetch(CONFIG.eitaaEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ record: rec, fileName })
+      });
+      const json = await res.json();
+      eitaaStatus = json.status === "ok" ? "sent" : "failed";
+    } catch(err){
+      eitaaStatus = "failed";
+    }
+  }
+
+  downloadJSON([rec], fileName);
+
+  const statusHtml = eitaaStatus === "sent"
+    ? `<div class="msg ok">📨 فایل با موفقیت به ایتا ارسال شد.</div>`
+    : eitaaStatus === "failed"
+      ? `<div class="msg err">⚠️ ارسال به ایتا ناموفق بود. فایل پشتیبان دانلود شد.</div>`
+      : "";
 
   document.getElementById("lockedDetails").innerHTML = `
+    ${statusHtml}
     <div class="lockbox">
       <div><b>پیمانکار:</b> ${rec.contractor}</div>
       <div><b>کارگاه:</b> ${rec.workshopName}</div>
       <div><b>ارزیاب:</b> ${rec.supervisor}</div>
-      <div><b>تاریخ:</b> ${new Date(ts).toLocaleString("fa-IR")}</div>
       <div><b>امتیاز نهایی:</b> <b style="color:#0f5c8c">${toFa(rec.total)}</b> از ۱۰۰</div>
-      <div style="margin-top:6px"><b>شناسه یکتا:</b><br><code>${rec.hash}</code></div>
     </div>
-    <p class="hint">فایل JSON دانلود شد. آن را برای مدیر پروژه ارسال کنید.</p>
   `;
   showScreen("locked");
   window.scrollTo({top:0, behavior:"smooth"});
