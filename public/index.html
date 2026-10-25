@@ -56,7 +56,7 @@
 
 <header class="top">
   <h1>فرم ارزیابی عملکرد پیمانکاران</h1>
-  <p>ویژه رؤسای کارگاه و مدیران پروژه — پس از ثبت، قابل تغییر نیست</p>
+  <p>ویژه رؤسای کارگاه و مدیران پروژه</p>
 </header>
 
 <main>
@@ -68,7 +68,6 @@
       <select id="userSel"></select>
     </div>
     <button class="primary" onclick="login()">ورود</button>
-    <p class="hint">رؤسای کارگاه فقط پیمانکاران کارگاه خود را می‌بینند. مدیران پروژه همه پیمانکاران را ارزیابی می‌کنند.</p>
   </section>
 
   <!-- لیست -->
@@ -77,7 +76,6 @@
     <div id="listBox"></div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="ghost" onclick="logout()">خروج</button>
-      <button class="ghost" onclick="downloadAllMine()">⬇️ دانلود همه ارزیابی‌های من</button>
     </div>
   </section>
 
@@ -87,13 +85,13 @@
       <h2 id="formTitle"></h2>
       <div class="hint" id="formHint"></div>
     </div>
-    <form id="form" on="return false;"></form>
+    <form id="form" onsubmit="return false;"></form>
     <div id="formMsg"></div>
   </section>
 
   <!-- قفل -->
   <section id="scrLocked" class="card hidden">
-    <div class="msg ok" style="font-size:15px">✅ ارزیابی با موفقیت <b>ثبت و قفل</b> شد. امکان تغییر وجود ندارد.</div>
+    <div class="msg ok" style="font-size:15px">✅ ارزیابی با موفقیت <b>ثبت و قفل</b> شد.</div>
     <div id="lockedDetails"></div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="primary" onclick="downloadCurrentRecord()">⬇️ دانلود فایل JSON</button>
@@ -110,397 +108,206 @@
 </div>
 
 <script>
-/* =========================================================
-   ⚠️ CONFIG — تنها این بخش را برای تغییر اطلاعات ویرایش کنید
-   پس از هر تغییر، این فایل را ذخیره و نسخه جدید را برای
-   ارزیابان بفرستید. مقدار salt باید با فایل داشبورد یکسان باشد.
-   ========================================================= */
 const CONFIG = {
   salt: "pc-eval-v2-2025-immutable",
   eitaaEndpoint: "/api/send",
   workshops: [
-    { code:"W1",  name:"ایستگاه‌های مختلف پروژه", supervisor:"مهندس ادهم هاشمی",
-      contractors:["محمود بیرجندی","داناب تهویه پارس گستر","احمد یزدی","تعاونی هشتصد و نود و پنج"] },
-    { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی",
-      contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی"] },
-    { code:"W3",  name:"شهدا", supervisor:"مهندس آخوند زاده",
-      contractors:["یاسر باقری قلعه جوق","سید محمد ثمره موسوی","نیک سازان برق مشهد","پیمانکاری راه مرد","توسعه اقتصادی فرزام"] },
-    { code:"W4",  name:"باب الجواد", supervisor:"مهندس علیدوست",
-      contractors:["حسن خوش اندام"] },
-    { code:"W5",  name:"فردوسی", supervisor:"مهندس خوش طبخ",
-      contractors:["رادین راه پیما"] },
-    { code:"W6",  name:"ابوذر", supervisor:"مهندس فیروزی",
-      contractors:["حسن خوش اندام"] },
-    { code:"W7",  name:"بسیج", supervisor:"مهندس منتظریان",
-      contractors:["شرکت گروه مهندسی سورنا سازه آریو","نیک سازان برق مشهد"] },
-    { code:"W8",  name:"شارستان", supervisor:"مهندس فلاح",
-      contractors:["پیمانکاری راه مرد"] },
-    { code:"W9",  name:"لینک سه راهی", supervisor:"مهندس فیروزی",
-      contractors:["شرکت گروه مهندسی سورنا سازه آریو"] },
-    { code:"W10", name:"میان تونلی", supervisor:"مهندس معلوم‌نیست",
-      contractors:["توسعه اقتصادی فرزام"] }
+    { code:"W1",  name:"ایستگاه‌های مختلف پروژه", supervisor:"مهندس ادهم هاشمی", contractors:["محمود بیرجندی","داناب تهویه پارس گستر","احمد یزدی","تعاونی هشتصد و نود و پنج"] },
+    { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی"] },
+    { code:"W3",  name:"شهدا", supervisor:"مهندس آخوند زاده", contractors:["یاسر باقری قلعه جوق","سید محمد ثمره موسوی","نیک سازان برق مشهد","پیمانکاری راه مرد","توسعه اقتصادی فرزام"] },
+    { code:"W4",  name:"باب الجواد", supervisor:"مهندس علیدوست", contractors:["حسن خوش اندام"] },
+    { code:"W5",  name:"فردوسی", supervisor:"مهندس خوش طبخ", contractors:["رادین راه پیما"] },
+    { code:"W6",  name:"ابوذر", supervisor:"مهندس فیروزی", contractors:["حسن خوش اندام"] },
+    { code:"W7",  name:"بسیج", supervisor:"مهندس منتظریان", contractors:["شرکت گروه مهندسی سورنا سازه آریو","نیک سازان برق مشهد"] },
+    { code:"W8",  name:"شارستان", supervisor:"مهندس فلاح", contractors:["پیمانکاری راه مرد"] },
+    { code:"W9",  name:"لینک سه راهی", supervisor:"مهندس فیروزی", contractors:["شرکت گروه مهندسی سورنا سازه آریو"] },
+    { code:"W10", name:"میان تونلی", supervisor:"مهندس معلوم‌نیست", contractors:["توسعه اقتصادی فرزام"] }
   ],
-
-  // نام هر مدیر را در مقدار name وارد کنید
   managers: [
-    { code:"PM", role:"مدیر پروژه",              name:"" },
-    { code:"CM", role:"مدیر قراردادهای پروژه",   name:"" },
-    { code:"SM", role:"مدیر ساخت پروژه",         name:"" }
+    { code:"PM", role:"مدیر پروژه", name:"" },
+    { code:"CM", role:"مدیر قراردادهای پروژه", name:"" },
+    { code:"SM", role:"مدیر ساخت پروژه", name:"" }
   ]
 };
-/* ================= پایان CONFIG ================= */
 
-/* ============ شاخص‌ها ============ */
 const CRITERIA = [
   { key:"tech", group:"۱) فنی و اجرایی", gw:30, items:[
-    { id:"t1", w:12, t:"کیفیت اجرا و انطباق فنی" },
-    { id:"t2", w:8,  t:"برنامه‌ریزی و کنترل زمان" },
-    { id:"t3", w:5,  t:"تجهیزات و ماشین‌آلات" },
-    { id:"t4", w:5,  t:"ایمنی، بهداشت و محیط زیست (HSE)" }
+    { id:"t1", w:12, t:"کیفیت اجرا و انطباق فنی" }, { id:"t2", w:8, t:"برنامه‌ریزی و کنترل زمان" },
+    { id:"t3", w:5, t:"تجهیزات و ماشین‌آلات" }, { id:"t4", w:5, t:"ایمنی، بهداشت و محیط زیست (HSE)" }
   ]},
   { key:"contract", group:"۲) قراردادی و مدیریتی", gw:20, items:[
-    { id:"c1", w:8, t:"تعامل و پاسخگویی با کارفرما و ناظر" },
-    { id:"c2", w:6, t:"مدیریت اداری و مستندسازی" },
+    { id:"c1", w:8, t:"تعامل و پاسخگویی با کارفرما و ناظر" }, { id:"c2", w:6, t:"مدیریت اداری و مستندسازی" },
     { id:"c3", w:6, t:"حسن سابقه و اعتبار" }
   ]},
-  { key:"value", group:"۳) اخلاقی، اعتقادی و سیاسی و اثر آن بر نیروی انسانی", gw:20, items:[
-    { id:"v1", w:6, t:"پایبندی به ارزش‌های اخلاقی و اعتقادی اعلام‌شده" },
-    { id:"v2", w:4, t:"رفتار سیاسی مسئولانه (پرهیز از تنش‌آفرینی)" },
-    { id:"v3", w:4, t:"صداقت، شفافیت و سلامت اداری" },
-    { id:"v4", w:4, t:"کرامت، عدالت و عدم تبعیض با نیروی انسانی" },
-    { id:"v5", w:2, t:"فرهنگ سازمانی و الگوی رفتاری مدیران" }
+  { key:"value", group:"۳) اخلاقی، اعتقادی و سیاسی", gw:20, items:[
+    { id:"v1", w:6, t:"پایبندی به ارزش‌های اخلاقی و اعتقادی" }, { id:"v2", w:4, t:"رفتار سیاسی مسئولانه" },
+    { id:"v3", w:4, t:"صداقت، شفافیت و سلامت اداری" }, { id:"v4", w:4, t:"کرامت، عدالت و عدم تبعیض" }, { id:"v5", w:2, t:"فرهنگ سازمانی" }
   ]},
   { key:"hr", group:"۴) نیروی انسانی و حقوق کارکنان", gw:30, items:[
-    { id:"h1", w:12, t:"پرداخت به‌موقع حقوق و دستمزد" },
-    { id:"h2", w:8,  t:"بیمه و تأمین اجتماعی" },
-    { id:"h3", w:5,  t:"رفاه، ایمنی روانی و شرایط کار" },
-    { id:"h4", w:5,  t:"آموزش و توانمندسازی نیروی کار" }
+    { id:"h1", w:12, t:"پرداخت به‌موقع حقوق" }, { id:"h2", w:8, t:"بیمه و تأمین اجتماعی" },
+    { id:"h3", w:5, t:"رفاه، ایمنی روانی و شرایط کار" }, { id:"h4", w:5, t:"آموزش و توانمندسازی" }
   ]}
 ];
 const ALL_ITEMS = CRITERIA.flatMap(g=>g.items.map(i=>({...i,gkey:g.key})));
 const TOTAL_ITEMS = ALL_ITEMS.length;
-
-/* ============ ذخیره‌سازی ============ */
 const LS_LOCKS = "pc_eval_locks_v2";
 const LS_RECS  = "pc_eval_sup_records_v2";
 
-/* ============ وضعیت ============ */
-let currentUser = null;   // {type:"sup"|"mgr", code, name, role, workshops?}
-let curTarget = null;     // {workshop?, contractor}
-let scores = {}, lastRec = null;
+let currentUser = null, curTarget = null, scores = {}, lastRec = null;
 
-/* ============ ابزارها ============ */
 function toFa(n){ return String(n).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[d]); }
 function simpleHash(str){
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-  for(let i=0;i<str.length;i++){
-    const c = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ c, 2654435761);
-    h2 = Math.imul(h2 ^ c, 1597334677);
-  }
+  for(let i=0;i<str.length;i++){ const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
   h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
   h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
   return (h2>>>0).toString(16).padStart(8,"0") + (h1>>>0).toString(16).padStart(8,"0");
 }
-function weightedTotal(sc){
-  return ALL_ITEMS.reduce((s,i)=> s + Number(sc[i.id]||0) * i.w, 0) / 10;
-}
-function groupPercent(sc, g){
-  const sumW = g.items.reduce((s,i)=>s+i.w,0);
-  const got = g.items.reduce((s,i)=> s + Number(sc[i.id]||0)*i.w, 0);
-  return (got / (10*sumW)) * 100;
-}
+function weightedTotal(sc){ return ALL_ITEMS.reduce((s,i)=> s + Number(sc[i.id]||0) * i.w, 0) / 10; }
+function groupPercent(sc, g){ const sumW = g.items.reduce((s,i)=>s+i.w,0); const got = g.items.reduce((s,i)=> s + Number(sc[i.id]||0)*i.w, 0); return (got / (10*sumW)) * 100; }
 function getLocks(){ return JSON.parse(localStorage.getItem(LS_LOCKS) || "{}"); }
 function getRecs(){ return JSON.parse(localStorage.getItem(LS_RECS) || "{}"); }
 function saveRecs(o){ localStorage.setItem(LS_RECS, JSON.stringify(o)); }
 function isLocked(recordId){ return !!getLocks()[recordId]; }
-function downloadJSON(obj, fn){
-  const b = new Blob([JSON.stringify(obj,null,2)],{type:"application/json;charset=utf-8"});
-  const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = fn; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
-}
+function downloadJSON(obj, fn){ const b = new Blob([JSON.stringify(obj,null,2)],{type:"application/json;charset=utf-8"}); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = fn; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000); }
 function uniq(arr){ return [...new Set(arr)]; }
-function allContractors(){
-  return uniq(CONFIG.workshops.flatMap(w => w.contractors));
-}
-function contractorWorkshops(name){
-  return CONFIG.workshops.filter(w => w.contractors.includes(name));
-}
+function allContractors(){ return uniq(CONFIG.workshops.flatMap(w => w.contractors)); }
+function contractorWorkshops(name){ return CONFIG.workshops.filter(w => w.contractors.includes(name)); }
+function recordHash(r){ return simpleHash(CONFIG.salt + "|" + r.id + "|" + r.supervisor + "|" + r.contractor + "|" + JSON.stringify(r.scores) + "|" + r.total + "|" + r.timestamp); }
 
-/* ============ ساخت شناسه یکتای رکورد ============ */
-function recordId(userType, workshopCode, contractor){
-  // برای رئیس: sup|کدکارگاه|پیمانکار — برای مدیر: mgr|کدمدیر|پیمانکار
-  return userType === "sup"
-    ? `sup|${workshopCode}|${contractor}`
-    : `mgr|${currentUser.code}|${contractor}`;
-}
-function recordHash(r){
-  return simpleHash(CONFIG.salt + "|" + r.id + "|" + r.supervisor + "|" + r.contractor +
-    "|" + JSON.stringify(r.scores) + "|" + r.total + "|" + r.timestamp);
-}
-
-/* ============ ساخت فرم ============ */
 function buildForm(){
-  const form = document.getElementById("form");
-  form.innerHTML = "";
+  const form = document.getElementById("form"); form.innerHTML = "";
   CRITERIA.forEach(g=>{
-    const s = document.createElement("section");
-    s.className = "card";
+    const s = document.createElement("section"); s.className = "card";
     let h = `<h2>${g.group} <span class="w">وزن ${g.gw}٪</span></h2>`;
-    g.items.forEach(it=>{
-      h += `<div class="item">
-        <div class="it-title">${it.t} <span class="iw">${it.w}٪</span></div>
-        <div class="scale" data-id="${it.id}">
-          ${Array.from({length:10},(_,i)=>`<button type="button" data-v="${i+1}">${i+1}</button>`).join("")}
-        </div></div>`;
-    });
-    s.innerHTML = h;
-    form.appendChild(s);
+    g.items.forEach(it=>{ h += `<div class="item"><div class="it-title">${it.t} <span class="iw">${it.w}٪</span></div><div class="scale" data-id="${it.id}">${Array.from({length:10},(_,i)=>`<button type="button" data-v="${i+1}">${i+1}</button>`).join("")}</div></div>`; });
+    s.innerHTML = h; form.appendChild(s);
   });
   form.addEventListener("click", e=>{
-    const btn = e.target.closest(".scale button");
-    if(!btn) return;
-    const wrap = btn.closest(".scale");
-    scores[wrap.dataset.id] = Number(btn.dataset.v);
-    wrap.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b===btn));
-    updateTotal();
+    const btn = e.target.closest(".scale button"); if(!btn) return;
+    const wrap = btn.closest(".scale"); scores[wrap.dataset.id] = Number(btn.dataset.v);
+    wrap.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b===btn)); updateTotal();
   });
 }
-function updateTotal(){
-  document.getElementById("progress").textContent =
-    `${toFa(Object.keys(scores).length)} از ${toFa(TOTAL_ITEMS)}`;
-  document.getElementById("total").textContent = toFa(weightedTotal(scores).toFixed(1));
-}
+function updateTotal(){ document.getElementById("progress").textContent = `${toFa(Object.keys(scores).length)} از ${toFa(TOTAL_ITEMS)}`; document.getElementById("total").textContent = toFa(weightedTotal(scores).toFixed(1)); }
+function showScreen(name){ ["Login","List","Form","Locked"].forEach(s=>{ document.getElementById("scr"+s).classList.toggle("hidden", s.toLowerCase() !== name.toLowerCase()); }); document.getElementById("bar").classList.toggle("hidden", name !== "form"); }
 
-/* ============ ناوبری ============ */
-function showScreen(name){
-  ["Login","List","Form","Locked"].forEach(s=>{
-    document.getElementById("scr"+s).classList.toggle("hidden", s.toLowerCase() !== name.toLowerCase());
-  });
-  document.getElementById("bar").classList.toggle("hidden", name !== "form");
-}
-
-/* ============ مقداردهی اولیه ============ */
 function init(){
   const sel = document.getElementById("userSel");
-  const supGroup = document.createElement("optgroup");
-  supGroup.label = "رؤسای کارگاه";
-  // استخراج لیست یکتای رؤسا از workshops
-  const supNames = uniq(CONFIG.workshops.map(w => w.supervisor));
-  supNames.forEach(name=>{
-    const o = document.createElement("option");
-    o.value = "sup::" + name;
-    o.textContent = name;
-    supGroup.appendChild(o);
-  });
-  sel.appendChild(supGroup);
-
-  const mgrGroup = document.createElement("optgroup");
-  mgrGroup.label = "مدیران پروژه";
-  CONFIG.managers.forEach(m=>{
-    const o = document.createElement("option");
-    o.value = "mgr::" + m.code;
-    o.textContent = m.name ? `${m.role} — ${m.name}` : m.role;
-    mgrGroup.appendChild(o);
-  });
-  sel.appendChild(mgrGroup);
-
-  buildForm();
-  showScreen("login");
+  const supGroup = document.createElement("optgroup"); supGroup.label = "رؤسای کارگاه";
+  uniq(CONFIG.workshops.map(w => w.supervisor)).forEach(name=>{ const o = document.createElement("option"); o.value = "sup::" + name; o.textContent = name; supGroup.appendChild(o); }); sel.appendChild(supGroup);
+  const mgrGroup = document.createElement("optgroup"); mgrGroup.label = "مدیران پروژه";
+  CONFIG.managers.forEach(m=>{ const o = document.createElement("option"); o.value = "mgr::" + m.code; o.textContent = m.name ? `${m.role} — ${m.name}` : m.role; mgrGroup.appendChild(o); }); sel.appendChild(mgrGroup);
+  buildForm(); showScreen("login");
 }
 
-/* ============ ورود ============ */
 function login(){
   const val = document.getElementById("userSel").value;
-  if(val.startsWith("sup::")){
-    const name = val.slice(5);
-    currentUser = {
-      type:"sup", name,
-      workshops: CONFIG.workshops.filter(w => w.supervisor === name)
-    };
-  } else {
-    const code = val.slice(5);
-    const m = CONFIG.managers.find(x=>x.code===code);
-    if(!m) return;
-    currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role };
-  }
-  document.getElementById("listTitle").textContent =
-    currentUser.type === "sup"
-      ? `کارگاه‌های تحت مسئولیت: ${currentUser.name}`
-      : `ارزیابی همه پیمانکاران — ${currentUser.role}`;
-  showScreen("list");
-  renderList();
+  if(val.startsWith("sup::")){ const name = val.slice(5); currentUser = { type:"sup", name, workshops: CONFIG.workshops.filter(w => w.supervisor === name) }; }
+  else { const code = val.slice(5); const m = CONFIG.managers.find(x=>x.code===code); if(!m) return; currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role }; }
+  document.getElementById("listTitle").textContent = currentUser.type === "sup" ? `کارگاه‌های تحت مسئولیت: ${currentUser.name}` : `ارزیابی همه پیمانکاران — ${currentUser.role}`;
+  showScreen("list"); renderList();
 }
+function logout(){ currentUser = null; curTarget = null; scores = {}; showScreen("login"); }
 
-function logout(){
-  currentUser = null; curTarget = null; scores = {};
-  showScreen("login");
-}
-
-/* ============ نمایش لیست ============ */
 function renderList(){
-  const box = document.getElementById("listBox");
-  box.innerHTML = "";
-
+  const box = document.getElementById("listBox"); box.innerHTML = "";
   if(currentUser.type === "sup"){
     currentUser.workshops.forEach(w=>{
-      const group = document.createElement("div");
-      group.className = "ws-group";
-      group.innerHTML = `<div class="ws-title">🏗️ ${w.name} <small>(کد: ${w.code})</small></div>`;
+      const group = document.createElement("div"); group.className = "ws-group"; group.innerHTML = `<div class="ws-title">🏗️ ${w.name}</div>`;
       w.contractors.forEach(c=>{
-        const id = `sup|${w.code}|${c}`;
-        const locked = isLocked(id);
-        const d = document.createElement("div");
-        d.className = "cbox" + (locked ? " locked" : "");
-        d.innerHTML = `
-          <div>
-            <b>${c}</b>
-            <div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div>
-          </div>
-          ${locked
-            ? `<button class="ghost" onclick="redownload('${id}')">دانلود مجدد</button>`
-            : `<button class="primary" onclick="openForm('${w.code}','${esc(c)}')">شروع ارزیابی</button>`}
-        `;
+        const id = `sup|${w.code}|${c}`, locked = isLocked(id);
+        const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
+        d.innerHTML = `<div><b>${c}</b><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>${locked ? `<button class="ghost" onclick="redownload('${id}')">دانلود مجدد</button>` : `<button class="primary" onclick="openForm('${w.code}','${esc(c)}')">شروع ارزیابی</button>`}`;
         group.appendChild(d);
-      });
-      box.appendChild(group);
+      }); box.appendChild(group);
     });
   } else {
-    // مدیر: همه پیمانکاران یکتا با ذکر کارگاه‌ها
-    const list = allContractors();
-    list.forEach(c=>{
-      const id = `mgr|${currentUser.code}|${c}`;
-      const locked = isLocked(id);
+    allContractors().forEach(c=>{
+      const id = `mgr|${currentUser.code}|${c}`, locked = isLocked(id);
       const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ");
-      const d = document.createElement("div");
-      d.className = "cbox" + (locked ? " locked" : "");
-      d.innerHTML = `
-        <div style="flex:1">
-          <b>${c}</b>
-          <div class="st">کارگاه: ${ws}</div>
-          <div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div>
-        </div>
-        ${locked
-          ? `<button class="ghost" onclick="redownload('${id}')">دانلود مجدد</button>`
-          : `<button class="primary" onclick="openFormMgr('${esc(c)}')">شروع ارزیابی</button>`}
-      `;
+      const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
+      d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">کارگاه: ${ws}</div><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>${locked ? `<button class="ghost" onclick="redownload('${id}')">دانلود مجدد</button>` : `<button class="primary" onclick="openFormMgr('${esc(c)}')">شروع ارزیابی</button>`}`;
       box.appendChild(d);
     });
   }
 }
-
 function esc(s){ return s.replace(/'/g,"\\'"); }
 
-/* ============ باز کردن فرم ============ */
 function openForm(workshopCode, contractor){
-  const id = `sup|${workshopCode}|${contractor}`;
-  if(isLocked(id)){ alert("این ارزیابی قبلاً ثبت و قفل شده است."); return; }
+  const id = `sup|${workshopCode}|${contractor}`; if(isLocked(id)) return alert("قبلاً ثبت شده.");
   const w = CONFIG.workshops.find(x=>x.code===workshopCode);
-  curTarget = { workshopCode, workshopName:w.name, contractor };
-  scores = {};
-  document.querySelectorAll(".scale button").forEach(b=>b.classList.remove("on"));
-  updateTotal();
-  document.getElementById("formTitle").textContent = `ارزیابی: ${contractor}`;
-  document.getElementById("formHint").textContent = `کارگاه: ${w.name} — رئیس کارگاه: ${currentUser.name}`;
-  document.getElementById("formMsg").innerHTML =
-    `<div class="msg warn">⚠️ با ثبت نهایی، امتیازها <b>دائماً قفل</b> می‌شوند و امکان ویرایش وجود ندارد.</div>`;
-  showScreen("form");
-  window.scrollTo({top:0, behavior:"smooth"});
+  curTarget = { workshopCode, workshopName:w.name, contractor }; scores = {}; document.querySelectorAll(".scale button").forEach(b=>b.classList.remove("on")); updateTotal();
+  document.getElementById("formTitle").textContent = `ارزیابی: ${contractor}`; document.getElementById("formHint").textContent = `کارگاه: ${w.name} — رئیس کارگاه: ${currentUser.name}`;
+  document.getElementById("formMsg").innerHTML = `<div class="msg warn">⚠️ با ثبت نهایی، امتیازها دائماً قفل می‌شوند.</div>`; showScreen("form"); window.scrollTo({top:0, behavior:"smooth"});
 }
-
 function openFormMgr(contractor){
-  const id = `mgr|${currentUser.code}|${contractor}`;
-  if(isLocked(id)){ alert("این ارزیابی قبلاً ثبت و قفل شده است."); return; }
-  curTarget = { contractor, isMgr:true };
-  scores = {};
-  document.querySelectorAll(".scale button").forEach(b=>b.classList.remove("on"));
-  updateTotal();
+  const id = `mgr|${currentUser.code}|${contractor}`; if(isLocked(id)) return alert("قبلاً ثبت شده.");
+  curTarget = { contractor, isMgr:true }; scores = {}; document.querySelectorAll(".scale button").forEach(b=>b.classList.remove("on")); updateTotal();
   document.getElementById("formTitle").textContent = `ارزیابی: ${contractor}`;
-  const wsNames = contractorWorkshops(contractor).map(w=>w.name).join(" ، ");
-  document.getElementById("formHint").textContent = `کارگاه‌ها: ${wsNames} — ارزیاب: ${currentUser.role}`;
-  document.getElementById("formMsg").innerHTML =
-    `<div class="msg warn">⚠️ با ثبت نهایی، امتیازها <b>دائماً قفل</b> می‌شوند.</div>`;
-  showScreen("form");
-  window.scrollTo({top:0, behavior:"smooth"});
+  document.getElementById("formHint").textContent = `کارگاه‌ها: ${contractorWorkshops(contractor).map(w=>w.name).join(" ، ")} — ارزیاب: ${currentUser.role}`;
+  document.getElementById("formMsg").innerHTML = `<div class="msg warn">⚠️ با ثبت نهایی، امتیازها دائماً قفل می‌شوند.</div>`; showScreen("form"); window.scrollTo({top:0, behavior:"smooth"});
 }
+function cancelForm(){ if(Object.keys(scores).length > 0 && !confirm("انصراف؟")) return; curTarget = null; scores = {}; showScreen("list"); renderList(); }
+function backToList(){ curTarget = null; scores = {}; lastRec = null; showScreen("list"); renderList(); }
 
-function cancelForm(){
-  if(Object.keys(scores).length > 0 && !confirm("امتیازهای وارد شده ذخیره نمی‌شوند. انصراف؟")) return;
-  curTarget = null; scores = {};
-  showScreen("list"); renderList();
-}
-function backToList(){
-  curTarget = null; scores = {}; lastRec = null;
-  showScreen("list"); renderList();
-}
-
-/* ============ ثبت و قفل ============ */
 async function submitEval(){
   if(!currentUser || !curTarget) return;
   const missing = ALL_ITEMS.filter(it=> scores[it.id] === undefined);
-  if(missing.length){
-    document.getElementById("formMsg").innerHTML =
-      `<div class="msg err">${toFa(missing.length)} شاخص بدون امتیاز مانده است.</div>`;
-    return;
-  }
+  if(missing.length){ document.getElementById("formMsg").innerHTML = `<div class="msg err">${toFa(missing.length)} شاخص بدون امتیاز مانده است.</div>`; return; }
   if(!confirm(`ثبت نهایی؟\n\n• ارسال به ایتا\n• پس از ثبت، امکان تغییر وجود ندارد.`)) return;
 
   const ts = new Date().toISOString();
   const isMgr = !!curTarget.isMgr;
-  const id = isMgr
-    ? `mgr|${currentUser.code}|${curTarget.contractor}`
-    : `sup|${curTarget.workshopCode}|${curTarget.contractor}`;
-  if(isLocked(id)){ alert("قبلاً ثبت شده."); return; }
+  const id = isMgr ? `mgr|${currentUser.code}|${curTarget.contractor}` : `sup|${curTarget.workshopCode}|${curTarget.contractor}`;
+  if(isLocked(id)){ return alert("قبلاً ثبت شده."); }
 
   const rec = {
-    version: 2, id,
-    evaluatorType: isMgr ? "manager" : "supervisor",
+    version: 2, id, evaluatorType: isMgr ? "manager" : "supervisor",
     evaluatorCode: isMgr ? currentUser.code : curTarget.workshopCode,
-    supervisor: isMgr ? `${currentUser.role}` : currentUser.name,
+    supervisor: isMgr ? currentUser.role : currentUser.name,
     evaluatorRole: isMgr ? currentUser.role : "رئیس کارگاه",
     contractor: curTarget.contractor,
     workshopCode: isMgr ? null : curTarget.workshopCode,
     workshopName: isMgr ? contractorWorkshops(curTarget.contractor).map(w=>w.name).join(" ، ") : curTarget.workshopName,
-    timestamp: ts,
-    scores: {...scores},
-    total: Number(weightedTotal(scores).toFixed(2)),
+    timestamp: ts, scores: {...scores}, total: Number(weightedTotal(scores).toFixed(2)),
     groups: Object.fromEntries(CRITERIA.map(g=>[g.key, Number(groupPercent(scores,g).toFixed(2))])),
     locked: true
   };
   rec.hash = recordHash(rec);
 
-  const locks = getLocks();
-  locks[id] = { hash:rec.hash, timestamp:ts };
-  localStorage.setItem(LS_LOCKS, JSON.stringify(locks));
-  const recs = getRecs(); recs[id] = rec; saveRecs(recs);
-  lastRec = rec;
+  const locks = getLocks(); locks[id] = { hash:rec.hash, timestamp:ts }; localStorage.setItem(LS_LOCKS, JSON.stringify(locks));
+  const recs = getRecs(); recs[id] = rec; saveRecs(recs); lastRec = rec;
 
   const fileName = `نظرسنجی_${rec.supervisor}_${rec.contractor}.json`;
 
-  // 📤 ارسال به ایتا از طریق ورسل
   let eitaaStatus = "skipped";
+  let eitaaErrorMsg = "";
+
   if(CONFIG.eitaaEndpoint){
     document.getElementById("formMsg").innerHTML = `<div class="msg warn">⏳ در حال ارسال به ایتا...</div>`;
     try {
       const res = await fetch(CONFIG.eitaaEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ record: rec, fileName })
       });
       const json = await res.json();
-      eitaaStatus = json.status === "ok" ? "sent" : "failed";
+      if (json.status === "ok") {
+        eitaaStatus = "sent";
+      } else {
+        eitaaStatus = "failed";
+        eitaaErrorMsg = json.message || "خطای ناشناخته از سرور";
+      }
     } catch(err){
       eitaaStatus = "failed";
+      eitaaErrorMsg = "خطای شبکه یا قطعی اینترنت";
     }
   }
 
   downloadJSON([rec], fileName);
 
-  const statusHtml = eitaaStatus === "sent"
-    ? `<div class="msg ok">📨 فایل با موفقیت به ایتا ارسال شد.</div>`
-    : eitaaStatus === "failed"
-      ? `<div class="msg err">⚠️ ارسال به ایتا ناموفق بود. فایل پشتیبان دانلود شد.</div>`
-      : "";
+  const statusHtml = eitaaStatus === "sent" ? `<div class="msg ok">📨 فایل با موفقیت به ایتا ارسال شد.</div>`
+    : eitaaStatus === "failed" ? `<div class="msg err">⚠️ ارسال ناموفق: ${eitaaErrorMsg}<br>فایل پشتیبان دانلود شد.</div>` : "";
 
   document.getElementById("lockedDetails").innerHTML = `
     ${statusHtml}
@@ -508,39 +315,15 @@ async function submitEval(){
       <div><b>پیمانکار:</b> ${rec.contractor}</div>
       <div><b>کارگاه:</b> ${rec.workshopName}</div>
       <div><b>ارزیاب:</b> ${rec.supervisor}</div>
+      <div><b>تاریخ:</b> ${new Date(ts).toLocaleString("fa-IR")}</div>
       <div><b>امتیاز نهایی:</b> <b style="color:#0f5c8c">${toFa(rec.total)}</b> از ۱۰۰</div>
     </div>
   `;
-  showScreen("locked");
-  window.scrollTo({top:0, behavior:"smooth"});
+  showScreen("locked"); window.scrollTo({top:0, behavior:"smooth"});
 }
 
-function downloadCurrentRecord(){
-  if(lastRec){
-    const safe = lastRec.id.replace(/[|\\/:*?"<>]/g,"_");
-    downloadJSON([lastRec], `eval_${safe}.json`);
-  }
-}
-function redownload(id){
-  const recs = getRecs(); const r = recs[id];
-  if(!r){ alert("رکورد یافت نشد در این دستگاه."); return; }
-  const safe = id.replace(/[|\\/:*?"<>]/g,"_");
-  downloadJSON([r], `eval_${safe}.json`);
-}
-function downloadAllMine(){
-  const recs = getRecs();
-  let mine;
-  if(currentUser.type === "sup"){
-    mine = Object.values(recs).filter(r=> r.evaluatorType==="supervisor" && r.supervisor === currentUser.name);
-  } else {
-    mine = Object.values(recs).filter(r=> r.evaluatorType==="manager" && r.evaluatorCode === currentUser.code);
-  }
-  if(!mine.length){ alert("هنوز ارزیابی ثبت نکرده‌اید."); return; }
-  const tag = currentUser.type === "sup"
-    ? currentUser.name.replace(/\s/g,"_")
-    : currentUser.code;
-  downloadJSON(mine, `evals_${tag}_all.json`);
-}
+function downloadCurrentRecord(){ if(lastRec){ downloadJSON([lastRec], `نظرسنجی_${lastRec.supervisor}_${lastRec.contractor}.json`); } }
+function redownload(id){ const recs = getRecs(); const r = recs[id]; if(!r) return alert("رکورد یافت نشد."); downloadJSON([r], `نظرسنجی_${r.supervisor}_${r.contractor}.json`); }
 
 init();
 </script>
