@@ -12,7 +12,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ status: "error", message: "اطلاعات رکورد ناقص است" });
     }
 
-    // خواندن متغیرها از تنظیمات ورسل
+    // خواندن متغیرها از تنظیمات ورسل (Environment Variables)
     const token  = process.env.EITAA_TOKEN;
     const chatId = process.env.EITAA_CHAT_ID;
     if (!token || !chatId) {

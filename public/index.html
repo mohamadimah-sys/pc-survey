@@ -21,7 +21,6 @@
   .ws-group{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed #eef2f7}
   .ws-group:last-child{border-bottom:none}
   .ws-title{font-size:14px;font-weight:700;color:var(--brand);margin-bottom:8px;padding:6px 10px;background:#f0f6fb;border-radius:8px}
-  .ws-title small{font-weight:400;color:var(--muted);font-size:11.5px}
   .item{padding:10px 0;border-bottom:1px dashed #eef2f7}
   .item:last-child{border-bottom:none}
   .it-title{font-size:13.5px;margin-bottom:7px}
@@ -38,7 +37,6 @@
   button.primary:hover{background:#0b4a72}
   button.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand);padding:9px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13.5px}
   button.danger{background:#dc2626;color:#fff;border:none;padding:11px 20px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700}
-  button.ok{background:#0d7a5f;color:#fff;border:none;padding:8px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13px}
   .msg{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:10px}
   .msg.ok{background:#e6f4ee;color:#0a5c46;border:1px solid #b7e4d3}
   .msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
@@ -60,7 +58,6 @@
 </header>
 
 <main>
-  <!-- ورود -->
   <section id="scrLogin" class="card">
     <h2>ورود به سامانه</h2>
     <div class="field">
@@ -70,7 +67,6 @@
     <button class="primary" onclick="login()">ورود</button>
   </section>
 
-  <!-- لیست -->
   <section id="scrList" class="card hidden">
     <h2 id="listTitle"></h2>
     <div id="listBox"></div>
@@ -79,7 +75,6 @@
     </div>
   </section>
 
-  <!-- فرم -->
   <section id="scrForm" class="hidden">
     <div class="card">
       <h2 id="formTitle"></h2>
@@ -89,13 +84,14 @@
     <div id="formMsg"></div>
   </section>
 
-  <!-- قفل -->
+  <!-- صفحه قفل -->
   <section id="scrLocked" class="card hidden">
     <div class="msg ok" style="font-size:15px">✅ ارزیابی با موفقیت <b>ثبت و قفل</b> شد.</div>
     <div id="lockedDetails"></div>
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button class="primary" onclick="downloadCurrentRecord()">⬇️ دانلود فایل JSON</button>
       <button class="ghost" onclick="backToList()">بازگشت به لیست</button>
+      <button class="ghost" style="color:#92400e;border-color:#fcd34d;margin-inline-start:auto" onclick="promptUnlock()">🔑 کد بازگشایی دارم</button>
     </div>
   </section>
 </main>
@@ -281,33 +277,20 @@ async function submitEval(){
 
   const fileName = `نظرسنجی_${rec.supervisor}_${rec.contractor}.json`;
 
-  let eitaaStatus = "skipped";
-  let eitaaErrorMsg = "";
+  let eitaaStatus = "skipped", eitaaErrorMsg = "";
 
   if(CONFIG.eitaaEndpoint){
     document.getElementById("formMsg").innerHTML = `<div class="msg warn">⏳ در حال ارسال به ایتا...</div>`;
     try {
-      const res = await fetch(CONFIG.eitaaEndpoint, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ record: rec, fileName })
-      });
+      const res = await fetch(CONFIG.eitaaEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ record: rec, fileName }) });
       const json = await res.json();
-      if (json.status === "ok") {
-        eitaaStatus = "sent";
-      } else {
-        eitaaStatus = "failed";
-        eitaaErrorMsg = json.message || "خطای ناشناخته از سرور";
-      }
-    } catch(err){
-      eitaaStatus = "failed";
-      eitaaErrorMsg = "خطای شبکه یا قطعی اینترنت";
-    }
+      if (json.status === "ok") { eitaaStatus = "sent"; } else { eitaaStatus = "failed"; eitaaErrorMsg = json.message || "خطای ناشناخته"; }
+    } catch(err){ eitaaStatus = "failed"; eitaaErrorMsg = "خطای شبکه"; }
   }
 
   downloadJSON([rec], fileName);
 
-  const statusHtml = eitaaStatus === "sent" ? `<div class="msg ok">📨 فایل با موفقیت به ایتا ارسال شد.</div>`
-    : eitaaStatus === "failed" ? `<div class="msg err">⚠️ ارسال ناموفق: ${eitaaErrorMsg}<br>فایل پشتیبان دانلود شد.</div>` : "";
+  const statusHtml = eitaaStatus === "sent" ? `<div class="msg ok">📨 فایل با موفقیت به ایتا ارسال شد.</div>` : eitaaStatus === "failed" ? `<div class="msg err">⚠️ ارسال ناموفق: ${eitaaErrorMsg}<br>فایل پشتیبان دانلود شد.</div>` : "";
 
   document.getElementById("lockedDetails").innerHTML = `
     ${statusHtml}
@@ -324,6 +307,28 @@ async function submitEval(){
 
 function downloadCurrentRecord(){ if(lastRec){ downloadJSON([lastRec], `نظرسنجی_${lastRec.supervisor}_${lastRec.contractor}.json`); } }
 function redownload(id){ const recs = getRecs(); const r = recs[id]; if(!r) return alert("رکورد یافت نشد."); downloadJSON([r], `نظرسنجی_${r.supervisor}_${r.contractor}.json`); }
+
+// ====== سیستم بازگشایی با کد مدیریت ======
+function makeUnlockCode(recordId) {
+  const secret = "ADMIN-UNLOCK-KEY-2025"; // کلید مخفی
+  return simpleHash(secret + "|" + recordId).slice(0, 8).toUpperCase();
+}
+
+function promptUnlock() {
+  if (!lastRec) return;
+  const code = prompt("کد بازگشایی را از مدیر پروژه بگیرید و اینجا وارد کنید:");
+  if (code === null) return;
+  const expected = makeUnlockCode(lastRec.id);
+  if (code.trim().toUpperCase() !== expected) {
+    alert("❌ کد بازگشایی نامعتبر است.\nکد را از مدیر پروژه دریافت کنید.");
+    return;
+  }
+  if (!confirm("کد صحیح است. قفل این ارزیابی باز شود؟")) return;
+  const locks = getLocks(); delete locks[lastRec.id]; localStorage.setItem(LS_LOCKS, JSON.stringify(locks));
+  const recs = getRecs(); delete recs[lastRec.id]; saveRecs(recs);
+  alert("✅ قفل باز شد. حالا می‌توانید دوباره ارزیابی کنید.");
+  backToList();
+}
 
 init();
 </script>
