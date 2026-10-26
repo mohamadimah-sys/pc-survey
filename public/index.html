@@ -63,7 +63,7 @@
     </div>
   </section>
 
-  <!-- لیست پیمانکاران (فقط بعد از تایید هویت) -->
+  <!-- لیست پیمانکاران -->
   <section id="scrList" class="card hidden">
     <h2 id="listTitle"></h2>
     <div id="listBox"></div>
@@ -107,7 +107,6 @@
 const CONFIG = {
   salt: "pc-eval-v2-2025-immutable",
   eitaaEndpoint: "/api/send",
-  // 🔽 کدهای امنیتی (PIN) برای هر شخص اضافه شد 🔽
   workshops: [
     { code:"W1",  name:"ایستگاه‌های مختلف پروژه", supervisor:"مهندس ادهم هاشمی", pin:"1001", contractors:["محمود بیرجندی","داناب تهویه پارس گستر","احمد یزدی","تعاونی هشتصد و نود و پنج"] },
     { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", pin:"1002", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی"] },
@@ -117,14 +116,15 @@ const CONFIG = {
     { code:"W6",  name:"ابوذر", supervisor:"مهندس فیروزی", pin:"1006", contractors:["حسن خوش اندام"] },
     { code:"W7",  name:"بسیج", supervisor:"مهندس منتظریان", pin:"1007", contractors:["شرکت گروه مهندسی سورنا سازه آریو","نیک سازان برق مشهد"] },
     { code:"W8",  name:"شارستان", supervisor:"مهندس فلاح", pin:"1008", contractors:["پیمانکاری راه مرد"] },
-    { code:"W9",  name:"لینک سه راهی", supervisor:"مهندس فیروزی", pin:"1006", contractors:["شرکت گروه مهندسی سورنا سازه آریو"] }, // مهندس فیروزی ۲ کارگاه دارد، پس یک PIN مشترک دارد
+    { code:"W9",  name:"لینک سه راهی", supervisor:"مهندس فیروزی", pin:"1006", contractors:["شرکت گروه مهندسی سورنا سازه آریو"] },
     { code:"W10", name:"میان تونلی", supervisor:"مهندس معلوم‌نیست", pin:"1010", contractors:["توسعه اقتصادی فرزام"] }
   ],
   managers: [
     { code:"PM", role:"مدیر پروژه", name:"", pin:"2001" },
     { code:"CM", role:"مدیر قراردادهای پروژه", name:"", pin:"2002" },
     { code:"SM", role:"مدیر ساخت پروژه", name:"", pin:"2003" }
-  ]
+  ],
+  master: { code:"MASTER", role:"مدیر ارشد (کنترل)", name:"مدیر ارشد", pin:"9999" }
 };
 
 const CRITERIA = [
@@ -206,7 +206,6 @@ function init(){
     const wCode = userId.replace("sup_", "");
     const w = CONFIG.workshops.find(x => x.code === wCode && x.pin === userPin);
     if(w){
-      // اگر چند کارگاه با همین نام و کد بود (مثل مهندس فیروزی)
       const allWs = CONFIG.workshops.filter(x => x.supervisor === w.supervisor && x.pin === userPin);
       currentUser = { type:"sup", name:w.supervisor, workshops: allWs };
     }
@@ -217,6 +216,12 @@ function init(){
     const m = CONFIG.managers.find(x => x.code === mCode && x.pin === userPin);
     if(m){
       currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role };
+    }
+  }
+  // بررسی مدیر ارشد
+  else if(userId === "master"){
+    if(userPin === CONFIG.master.pin){
+      currentUser = { type:"mgr", code:CONFIG.master.code, role:CONFIG.master.role, name:CONFIG.master.name, isMaster: true };
     }
   }
 
@@ -252,6 +257,23 @@ function renderList(){
       }); box.appendChild(group);
     });
   } else {
+    // دکمه اختصاصی مدیر ارشد برای ریست کردن حافظه
+    if(currentUser.isMaster) {
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "danger";
+      resetBtn.style.width = "100%";
+      resetBtn.style.marginBottom = "15px";
+      resetBtn.textContent = "🔄 ریست کامل حافظه این دستگاه (مخصوص مدیر ارشد)";
+      resetBtn.onclick = () => {
+        if(confirm("آیا مطمئن هستید؟ تمام قفل‌ها و ارزیابی‌های ثبت‌شده در این دستگاه پاک می‌شوند.")) {
+          localStorage.removeItem(LS_LOCKS);
+          localStorage.removeItem(LS_RECS);
+          location.reload();
+        }
+      };
+      box.appendChild(resetBtn);
+    }
+
     allContractors().forEach(c=>{
       const id = `mgr|${currentUser.code}|${c}`, locked = isLocked(id);
       const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ");
