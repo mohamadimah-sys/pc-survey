@@ -104,7 +104,6 @@ const CONFIG = {
   salt: "pc-eval-v2-2025-immutable",
   eitaaEndpoint: "/api/send",
   workshops: [
-    { code:"W1",  name:"ایستگاه‌های مختلف پروژه", supervisor:"مهندس ادهم هاشمی", pin:"1001", contractors:["محمود بیرجندی","داناب تهویه پارس گستر","احمد یزدی","تعاونی هشتصد و نود و پنج"] },
     { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", pin:"1002", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی", "پیمانکاری ظریف", "فتاح احمدی بابادی"] },
     { code:"W3",  name:"شهدا", supervisor:"مهندس آخوند زاده", pin:"1003", contractors:["یاسر باقری قلعه جوق","سید محمد ثمره موسوی","نیک سازان برق مشهد","پیمانکاری راه مرد","توسعه اقتصادی فرزام"] },
     { code:"W4",  name:"باب الجواد", supervisor:"مهندس علیدوست", pin:"1004", contractors:["حسن خوش اندام"] },
@@ -118,9 +117,10 @@ const CONFIG = {
   managers: [
     { code:"PM", role:"مدیر پروژه", pin:"2001", assignedContractors: null },
     { code:"CM", role:"مدیر قراردادهای پروژه", pin:"2002", assignedContractors: null },
-    { code:"SM", role:"مدیر ساخت پروژه", pin:"2003", assignedContractors: ["توسعه اقتصادی فرزام", "محمود بیرجندی", "داناب تهویه پارس گستر"] },
+    { code:"SM", role:"مدیر ساخت پروژه", pin:"2003", assignedContractors: null, excludedContractors: ["تعاونی هشتصد و نود و پنج"] },
     { code:"SPM", role:"مدیر پشتیبانی پروژه", pin:"2004", assignedContractors: ["تعاونی هشتصد و نود و پنج", "محمود بیرجندی", "داناب تهویه پارس گستر"] },
-    { code:"PMO", role:"دفتر مدیریت پروژه", pin:"2005", assignedContractors: ["تعاونی هشتصد و نود و پنج"] }
+    { code:"PMO", role:"دفتر مدیریت پروژه", pin:"2005", assignedContractors: ["تعاونی هشتصد و نود و پنج"] },
+    { code:"TM", role:"مدیر فنی پروژه", pin:"2006", assignedContractors: null }
   ],
   master: { code:"MASTER", role:"مدیر ارشد (کنترل)", name:"مدیر ارشد", pin:"9999" }
 };
@@ -209,7 +209,7 @@ function init(){
     const mCode = userId.replace("mgr_", "");
     const m = CONFIG.managers.find(x => x.code === mCode && x.pin === userPin);
     if(m){
-      currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role, assignedContractors: m.assignedContractors };
+      currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role, assignedContractors: m.assignedContractors, excludedContractors: m.excludedContractors };
     }
   }
   else if(userId === "master"){
@@ -272,11 +272,14 @@ function renderList(){
       listToRender = currentUser.assignedContractors;
     } else {
       listToRender = allContractors();
+      if (currentUser.excludedContractors && currentUser.excludedContractors.length > 0) {
+         listToRender = listToRender.filter(c => !currentUser.excludedContractors.includes(c));
+      }
     }
 
     listToRender.forEach(c=>{
       const id = `mgr|${currentUser.code}|${c}`, locked = isLocked(id);
-      const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ");
+      const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ") || "—";
       const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
       d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">کارگاه: ${ws}</div><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
@@ -303,7 +306,7 @@ function openFormMgr(contractor){
   const id = `mgr|${currentUser.code}|${contractor}`; if(isLocked(id)) return alert("قبلاً ثبت شده.");
   curTarget = { contractor, isMgr:true }; scores = {}; document.querySelectorAll(".scale button").forEach(b=>b.classList.remove("on")); updateTotal();
   document.getElementById("formTitle").textContent = `ارزیابی: ${contractor}`;
-  document.getElementById("formHint").textContent = `کارگاه‌ها: ${contractorWorkshops(contractor).map(w=>w.name).join(" ، ")} — ارزیاب: ${currentUser.role}`;
+  document.getElementById("formHint").textContent = `کارگاه‌ها: ${contractorWorkshops(contractor).map(w=>w.name).join(" ، ") || "—"} — ارزیاب: ${currentUser.role}`;
   document.getElementById("formMsg").innerHTML = `<div class="msg warn">⚠️ با ثبت نهایی، امتیازها دائماً قفل می‌شوند.</div>`; showScreen("form"); window.scrollTo({top:0, behavior:"smooth"});
 }
 function cancelForm(){ if(Object.keys(scores).length > 0 && !confirm("انصراف؟")) return; curTarget = null; scores = {}; showScreen("list"); renderList(); }
@@ -358,7 +361,7 @@ async function submitEval(){
     ${statusHtml}
     <div class="lockbox">
       <div><b>پیمانکار:</b> ${rec.contractor}</div>
-      <div><b>کارگاه:</b> ${rec.workshopName}</div>
+      <div><b>کارگاه:</b> ${rec.workshopName || "—"}</div>
       <div><b>ارزیاب:</b> ${rec.supervisor}</div>
       <div><b>تاریخ:</b> ${new Date(ts).toLocaleString("fa-IR")}</div>
       <div><b>امتیاز نهایی:</b> <b style="color:#0f5c8c">${toFa(rec.total)}</b> از ۱۰۰</div>
