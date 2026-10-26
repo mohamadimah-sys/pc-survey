@@ -145,10 +145,8 @@
 </div>
 
 <script>
-/* ====== تنظیمات — این سه خط را با مقادیر خودتان پر کنید ====== */
-const SUPABASE_URL = "https://kcsakpgcuodbzdacshe.supabase.co"; // 👈 آدرس خودتان
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzY3Nha3BnY3VvZGJ6ZGFjc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5OTczNzQsImV4cCI6MjEwODU3MzM3NH0.yMBohZK2oEBgStPzhoCZ9IUSdTLzIg9YSGTXGCHDcUk";   // 👈 کلید طولانی (anon public)
-const ADMIN_PASSWORD = "admin-1405";                             // 👈 رمز ورود به پنل
+/* ====== تنظیمات ====== */
+const ADMIN_PASSWORD = "admin-1404"; // رمز ورود به پنل
 
 const ADMIN_CONFIG = {
   salt: "pc-eval-v2-2025-immutable",
@@ -205,18 +203,12 @@ function showMain(){
   startAutoRefresh();
 }
 
-// 👇 این تابع مستقیماً به Supabase وصل می‌شود (بدون واسطه)
+// 👇 متصل شدن به واسطه امن Vercel (بدون تحریم)
 async function fetchAll(){
-  const url = `${SUPABASE_URL}/rest/v1/evaluations?select=*&order=timestamp.desc`;
-  const r = await fetch(url, {
-    headers: { 
-      "apikey": SUPABASE_KEY, 
-      "Authorization": `Bearer ${SUPABASE_KEY}`
-    }
-  });
+  const r = await fetch("/api/admin");
   if(!r.ok){ 
     const t = await r.text(); 
-    throw new Error("خطای دیتابیس: " + t); 
+    throw new Error("خطای سرور: " + t); 
   }
   return await r.json();
 }
@@ -243,18 +235,11 @@ function showMsg(type, text){
   setTimeout(()=>{ box.innerHTML = ""; }, 6000);
 }
 
-// 👇 این تابع مستقیماً به Supabase وصل می‌شود
 async function updateRow(id, patch){
-  const url = `${SUPABASE_URL}/rest/v1/evaluations?id=eq.${encodeURIComponent(id)}`;
-  const r = await fetch(url, {
+  const r = await fetch("/api/admin", {
     method: "PATCH",
-    headers: { 
-      "apikey": SUPABASE_KEY, 
-      "Authorization": `Bearer ${SUPABASE_KEY}`, 
-      "Content-Type": "application/json", 
-      "Prefer": "return=minimal" 
-    },
-    body: JSON.stringify(patch)
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, patch })
   });
   if(!r.ok){ 
     const t = await r.text(); 
