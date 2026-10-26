@@ -84,7 +84,7 @@
     <div id="formMsg"></div>
   </section>
 
-  <!-- صفحه قفل -->
+  <!-- صفحه قفل (بلافاصله بعد از ثبت) -->
   <section id="scrLocked" class="card hidden">
     <div class="msg ok" style="font-size:15px">✅ ارزیابی با موفقیت <b>ثبت و قفل</b> شد.</div>
     <div id="lockedDetails"></div>
@@ -220,7 +220,16 @@ function renderList(){
       w.contractors.forEach(c=>{
         const id = `sup|${w.code}|${c}`, locked = isLocked(id);
         const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
-        d.innerHTML = `<div><b>${c}</b><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>${locked ? `<button class="ghost" onclick="redownload('${id}')">دانلود مجدد</button>` : `<button class="primary" onclick="openForm('${w.code}','${esc(c)}')">شروع ارزیابی</button>`}`;
+        
+        // دکمه بازگشایی به لیست اصلی اضافه شد
+        d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            ${locked ? 
+              `<button class="ghost" onclick="redownload('${id}')">⬇️ دانلود</button>
+               <button class="ghost" style="color:#92400e;border-color:#fcd34d;" onclick="promptUnlock('${esc(id)}')">🔑 بازگشایی</button>` 
+              : 
+              `<button class="primary" onclick="openForm('${w.code}','${esc(c)}')">شروع ارزیابی</button>`}
+          </div>`;
         group.appendChild(d);
       }); box.appendChild(group);
     });
@@ -229,7 +238,15 @@ function renderList(){
       const id = `mgr|${currentUser.code}|${c}`, locked = isLocked(id);
       const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ");
       const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
-      d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">کارگاه: ${ws}</div><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>${locked ? `<button class="ghost" onclick="redownload('${id}')">دانلود مجدد</button>` : `<button class="primary" onclick="openFormMgr('${esc(c)}')">شروع ارزیابی</button>`}`;
+      
+      d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">کارگاه: ${ws}</div><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          ${locked ? 
+            `<button class="ghost" onclick="redownload('${id}')">⬇️ دانلود</button>
+             <button class="ghost" style="color:#92400e;border-color:#fcd34d;" onclick="promptUnlock('${esc(id)}')">🔑 بازگشایی</button>` 
+            : 
+            `<button class="primary" onclick="openFormMgr('${esc(c)}')">شروع ارزیابی</button>`}
+        </div>`;
       box.appendChild(d);
     });
   }
@@ -320,18 +337,24 @@ function makeUnlockCode(recordId) {
   return simpleHash(secret + "|" + recordId).slice(0, 8).toUpperCase();
 }
 
-function promptUnlock() {
-  if (!lastRec) return;
+function promptUnlock(recordId) {
+  // اگر از لیست اومده باشد آیدی رو داره، اگر از صفحه قفل اومده باشه از lastRec می‌خونه
+  const id = recordId || (lastRec ? lastRec.id : null);
+  if (!id) return alert("خطا: رکورد یافت نشد.");
+  
   const code = prompt("کد بازگشایی را از مدیر پروژه بگیرید و اینجا وارد کنید:");
   if (code === null) return;
-  const expected = makeUnlockCode(lastRec.id);
+  
+  const expected = makeUnlockCode(id);
   if (code.trim().toUpperCase() !== expected) {
     alert("❌ کد بازگشایی نامعتبر است.\nکد را از مدیر پروژه دریافت کنید.");
     return;
   }
   if (!confirm("کد صحیح است. قفل این ارزیابی باز شود؟")) return;
-  const locks = getLocks(); delete locks[lastRec.id]; localStorage.setItem(LS_LOCKS, JSON.stringify(locks));
-  const recs = getRecs(); delete recs[lastRec.id]; saveRecs(recs);
+  
+  const locks = getLocks(); delete locks[id]; localStorage.setItem(LS_LOCKS, JSON.stringify(locks));
+  const recs = getRecs(); delete recs[id]; saveRecs(recs);
+  
   alert("✅ قفل باز شد. حالا می‌توانید دوباره ارزیابی کنید.");
   backToList();
 }
