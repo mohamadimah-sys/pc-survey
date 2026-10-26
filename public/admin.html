@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>پنل مدیریت — رتبه‌بندی پیمانکاران</title>
+<title>پنل مدیریت (آفلاین) — رتبه‌بندی پیمانکاران</title>
 <style>
   :root{--bg:#f4f6f9;--card:#fff;--ink:#1f2937;--muted:#6b7280;--brand:#0f5c8c;--brand2:#0d7a5f;--line:#e2e8f0}
   *{box-sizing:border-box}
@@ -18,10 +18,15 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
   .card h2{margin:0 0 12px;font-size:15px;color:var(--brand);display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #eef2f7;padding-bottom:8px}
   .card h2 .w{font-size:12px;background:#e6f4ee;color:var(--brand2);padding:2px 8px;border-radius:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+  .field textarea,.field input{padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:#fbfcfe;width:100%}
+  .field textarea{min-height:100px;direction:ltr;text-align:left;font-family:monospace;font-size:12px}
   .btn{background:var(--brand);color:#fff;border:none;padding:10px 18px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:700;margin:2px}
   .btn.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand);font-weight:400}
   .btn.ok{background:#0d7a5f}
-  .btn.warn{background:#b45309}
   .btn.danger{background:#dc2626}
   .msg{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:10px}
   .msg.ok{background:#e6f4ee;color:#0a5c46;border:1px solid #b7e4d3}
@@ -47,8 +52,6 @@
   .tag.mgr{background:#fef3c7;color:#92400e}
   .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
   .filters select{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;min-width:200px}
-  .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;margin-inline-end:6px;animation:pulse 1.5s infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   .login-box{max-width:380px;margin:60px auto;padding:24px;background:#fff;border:1px solid var(--line);border-radius:16px;text-align:center}
   .login-box input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px;font-family:inherit;font-size:15px;text-align:center;letter-spacing:3px}
 </style>
@@ -65,19 +68,42 @@
 
 <div id="screenMain" class="hidden">
   <header class="top">
-    <h1>داشبورد مدیریت پروژه <span style="font-size:12px;font-weight:400;opacity:.8">— <span class="live-dot"></span>زنده</span></h1>
-    <p>آخرین بروزرسانی: <span id="lastUpdate">در حال بارگذاری...</span> — <a href="#" onclick="manualRefresh();return false;" style="color:#fde68a">🔄 بروزرسانی</a> — <a href="#" onclick="logout();return false;" style="color:#fca5a5">🚪 خروج</a></p>
+    <h1>داشبورد مدیریت پروژه <span style="font-size:12px;font-weight:400;opacity:.8">— آفلاین</span></h1>
+    <p><a href="#" onclick="logout();return false;" style="color:#fca5a5">🚪 خروج</a></p>
   </header>
 
   <div class="tabs">
-    <button id="tabListBtn" class="active" onclick="switchTab('list')">📋 ارزیابی‌های دریافتی</button>
-    <button id="tabRankBtn" onclick="switchTab('rank')">🏆 رتبه‌بندی نهایی</button>
+    <button id="tabImportBtn" class="active" onclick="switchTab('import')">📥 دریافت داده‌ها</button>
+    <button id="tabListBtn" onclick="switchTab('list')">📋 ارزیابی‌ها</button>
+    <button id="tabRankBtn" onclick="switchTab('rank')">🏆 رتبه‌بندی</button>
   </div>
 
   <main>
     <div id="msgBox"></div>
 
-    <section id="tabList">
+    <section id="tabImport">
+      <div class="card">
+        <h2>دریافت فایل‌های ارزیابی (از ایتا)</h2>
+        <div class="grid2">
+          <div>
+            <div class="field">
+              <label>بارگذاری فایل‌های JSON (چند فایل مجاز است)</label>
+              <input type="file" id="fileInput" accept=".json" multiple>
+            </div>
+          </div>
+          <div>
+            <div class="field">
+              <label>یا چسباندن محتوای JSON</label>
+              <textarea id="pasteBox" placeholder='[{"id":"...","supervisor":"...","contractor":"...","scores":{},"hash":"..."}]'></textarea>
+            </div>
+            <button class="btn ghost" onclick="importPaste()">افزودن از متن</button>
+          </div>
+        </div>
+        <div class="hint">هر فایل به‌صورت خودکار اعتبارسنجی هش می‌شود. رکوردهای تکراری پذیرفته نمی‌شوند.</div>
+      </div>
+    </section>
+
+    <section id="tabList" class="hidden">
       <div class="card">
         <h2>ارزیابی‌های دریافتی <span class="w" id="subsCount">۰</span></h2>
         <div class="filters">
@@ -135,9 +161,9 @@
             <tbody></tbody>
           </table>
         </div>
-        <div class="hint">فقط ارزیابی‌های تاییدشده در رتبه‌بندی لحاظ می‌شوند.</div>
         <div style="margin-top:14px">
           <button class="btn ghost" onclick="exportRankCSV()">⬇️ خروجی CSV</button>
+          <button class="btn danger" onclick="clearAllData()" style="float:left">🗑️ پاک کردن همه داده‌ها</button>
         </div>
       </div>
     </section>
@@ -145,8 +171,8 @@
 </div>
 
 <script>
-/* ====== تنظیمات ====== */
-const ADMIN_PASSWORD = "admin-1404"; // رمز ورود به پنل
+const ADMIN_PASSWORD = "admin-1404"; 
+const LS_DB = "pc_admin_db_v3"; // ذخیره‌سازی محلی
 
 const ADMIN_CONFIG = {
   salt: "pc-eval-v2-2025-immutable",
@@ -180,6 +206,12 @@ function simpleHash(str){
   return (h2>>>0).toString(16).padStart(8,"0") + (h1>>>0).toString(16).padStart(8,"0");
 }
 
+function getDb(){
+  const d = JSON.parse(localStorage.getItem(LS_DB) || "null");
+  return d || { records:{} };
+}
+function saveDb(d){ localStorage.setItem(LS_DB, JSON.stringify(d)); }
+
 function tryUnlock(){
   const v = document.getElementById("pwdInput").value.trim();
   if(v !== ADMIN_PASSWORD){
@@ -200,33 +232,55 @@ function showMain(){
   document.getElementById("screenMain").classList.remove("hidden");
   populateRankView();
   loadData();
-  startAutoRefresh();
 }
 
-// 👇 متصل شدن به واسطه امن Vercel (بدون تحریم)
-async function fetchAll(){
-  const r = await fetch("/api/admin");
-  if(!r.ok){ 
-    const t = await r.text(); 
-    throw new Error("خطای سرور: " + t); 
+// ====== عملیات آپلود فایل ======
+document.getElementById("fileInput").addEventListener("change", async e=>{
+  const files = [...e.target.files];
+  let ok=0, dup=0, bad=0;
+  for(const f of files){
+    try{
+      const txt = await f.text();
+      const parsed = JSON.parse(txt);
+      const arr = Array.isArray(parsed) ? parsed : [parsed];
+      arr.forEach(r=>{
+        const res = importRecord(r);
+        if(res === "ok") ok++;
+        else if(res === "dup") dup++;
+        else bad++;
+      });
+    }catch(err){ bad++; }
   }
-  return await r.json();
+  showMsg("ok", `${toFa(ok)} پذیرفته — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`);
+  e.target.value = "";
+  loadData();
+});
+
+function importPaste(){
+  try{
+    const parsed = JSON.parse(document.getElementById("pasteBox").value);
+    const arr = Array.isArray(parsed) ? parsed : [parsed];
+    let ok=0, dup=0, bad=0;
+    arr.forEach(r=>{ const res = importRecord(r); if(res==="ok") ok++; else if(res==="dup") dup++; else bad++; });
+    showMsg("ok", `${toFa(ok)} افزوده — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`);
+    document.getElementById("pasteBox").value = "";
+    loadData();
+  }catch(e){ showMsg("err", "متن JSON نامعتبر است."); }
 }
 
-async function loadData(){
-  try {
-    const rows = await fetchAll();
-    dataCache = rows;
-    document.getElementById("lastUpdate").textContent = new Date().toLocaleTimeString("fa-IR");
-    renderList();
-    renderRank();
-  } catch(e) { showMsg("err", e.message); }
+function importRecord(r){
+  if(!r || !r.id || !r.supervisor || !r.contractor || !r.scores || !r.hash) return "bad";
+  const db = getDb();
+  if(db.records[r.id]) return "dup";
+  db.records[r.id] = { record:r, status:"pending", importedAt:new Date().toISOString() };
+  saveDb(db); return "ok";
 }
 
-function manualRefresh(){ loadData(); }
-function startAutoRefresh(){
-  if(refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(()=>{ if(!document.hidden) loadData(); }, 15000);
+function loadData(){
+  const db = getDb();
+  dataCache = Object.values(db.records).map(e => ({...e.record, status: e.status, note: e.note}));
+  renderList();
+  renderRank();
 }
 
 function showMsg(type, text){
@@ -235,32 +289,19 @@ function showMsg(type, text){
   setTimeout(()=>{ box.innerHTML = ""; }, 6000);
 }
 
-async function updateRow(id, patch){
-  const r = await fetch("/api/admin", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, patch })
-  });
-  if(!r.ok){ 
-    const t = await r.text(); 
-    throw new Error("خطا در ذخیره: " + t); 
-  }
+// ====== تایید / رد ======
+function updateRow(id, patch){
+  const db = getDb();
+  if(!db.records[id]) return;
+  db.records[id].status = patch.status;
+  if(patch.note) db.records[id].note = patch.note;
+  saveDb(db);
+  loadData();
 }
 
-async function approve(id){
-  if(!confirm("تایید شود؟")) return;
-  try { await updateRow(id, { status: "approved", approved_at: new Date().toISOString(), rejected_at: null, note: null }); await loadData(); showMsg("ok", "✓ تایید شد"); } catch(e){ showMsg("err", e.message); }
-}
-
-async function reject(id){
-  const reason = prompt("دلیل رد:"); if(reason === null) return;
-  try { await updateRow(id, { status: "rejected", rejected_at: new Date().toISOString(), note: reason }); await loadData(); showMsg("ok", "✓ رد شد"); } catch(e){ showMsg("err", e.message); }
-}
-
-async function reopen(id){
-  const typed = prompt("برای بازگشایی، عبارت «لغو» را تایپ کنید:"); if(typed !== "لغو"){ alert("عبارت اشتباه."); return; }
-  try { await updateRow(id, { status: "pending", approved_at: null, rejected_at: null, note: null }); await loadData(); showMsg("ok", "✓ بازگشایی شد"); } catch(e){ showMsg("err", e.message); }
-}
+function approve(id){ if(!confirm("تایید شود؟")) return; updateRow(id, { status: "approved" }); showMsg("ok", "✓ تایید شد"); }
+function reject(id){ const reason = prompt("دلیل رد:"); if(reason === null) return; updateRow(id, { status: "rejected", note: reason }); showMsg("ok", "✓ رد شد"); }
+function reopen(id){ const typed = prompt("برای بازگشایی، عبارت «لغو» را تایپ کنید:"); if(typed !== "لغو") return alert("عبارت اشتباه."); updateRow(id, { status: "pending", note: null }); showMsg("ok", "✓ بازگشایی شد"); }
 
 function makeUnlockCode(recordId) {
   const secret = "ADMIN-UNLOCK-KEY-2025";
@@ -271,6 +312,7 @@ function showUnlockCode(recordId, info) {
   prompt(`🔑 کد بازگشایی برای:\n${info}\n\nکد را کپی کرده و به ارزیاب بدهید:`, code);
 }
 
+// ====== رندرها ======
 function renderList(){
   const fS = document.getElementById("filterStatus").value;
   const fT = document.getElementById("filterType").value;
@@ -278,7 +320,8 @@ function renderList(){
     if(fS !== "all" && r.status !== fS) return false;
     if(fT !== "all" && r.evaluator_type !== fT) return false;
     return true;
-  });
+  }).sort((a,b)=> b.timestamp.localeCompare(a.timestamp));
+  
   document.getElementById("subsCount").textContent = toFa(dataCache.length);
   const tbody = document.querySelector("#subsTable tbody"); tbody.innerHTML = "";
   if(!list.length){ tbody.innerHTML = `<tr><td colspan="8" style="padding:18px;color:#6b7280">داده‌ای یافت نشد.</td></tr>`; return; }
@@ -287,6 +330,7 @@ function renderList(){
     const badgeCls = r.status === "approved" ? "approved" : r.status === "rejected" ? "rejected" : "pending";
     const badgeTxt = r.status === "approved" ? "✓ تایید" : r.status === "rejected" ? "✕ رد" : "⏳ انتظار";
     const typeBadge = r.evaluator_type === "manager" ? `<span class="tag mgr">مدیر</span>` : `<span class="tag">رئیس</span>`;
+    
     let ops = "";
     if(r.status === "pending"){
       ops = `<button class="btn ok" onclick="approve('${esc(r.id)}')">✓</button> <button class="btn danger" onclick="reject('${esc(r.id)}')">✕</button>`;
@@ -297,7 +341,7 @@ function renderList(){
     ops = unlockBtn + " " + ops;
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${r.supervisor}</td><td>${typeBadge}</td><td>${r.workshop_name || "—"}</td>
+    tr.innerHTML = `<td>${r.supervisor}</td><td>${typeBadge}</td><td>${r.workshopName || "—"}</td>
       <td class="name">${r.contractor}</td><td>${new Date(r.timestamp).toLocaleString("fa-IR")}</td>
       <td><b>${toFa(Number(r.total).toFixed(1))}</b></td>
       <td><span class="badge ${badgeCls}">${badgeTxt}</span>${r.note?`<div class="hint">${r.note}</div>`:""}</td><td>${ops}</td>`;
@@ -324,9 +368,9 @@ function aggregate(){
   const src = document.getElementById("rankSource").value;
   let filtered = approved;
   if(view !== "ALL"){
-    filtered = approved.filter(r=>{ if(r.evaluator_type === "supervisor" && r.workshop_code === view) return true; return false; });
+    filtered = approved.filter(r=>{ if(r.evaluator_type === "supervisor" && r.workshopCode === view) return true; return false; });
     if(!filtered.length){
-      const inWs = new Set(); approved.forEach(r=>{ if(r.workshop_code === view) inWs.add(r.contractor); });
+      const inWs = new Set(); approved.forEach(r=>{ if(r.workshopCode === view) inWs.add(r.contractor); });
       filtered = approved.filter(r=> r.evaluator_type === "manager" && inWs.has(r.contractor));
     }
   }
@@ -341,7 +385,7 @@ function aggregate(){
     m.total += Number(r.total);
     CRITERIA.forEach(g=>{ m.groups[g.key] += Number(r.groups[g.key] || 0); });
     ALL_ITEMS.forEach(it=>{ m.items[it.id] = (m.items[it.id] || 0) + Number(r.scores[it.id] || 0); });
-    if(r.workshop_code){ const w = ADMIN_CONFIG.workshops.find(x=>x.code===r.workshop_code); if(w) m.workshops.add(w.name); }
+    if(r.workshopCode){ const w = ADMIN_CONFIG.workshops.find(x=>x.code===r.workshopCode); if(w) m.workshops.add(w.name); }
   });
 
   return Object.values(map).map(m=>({
@@ -386,12 +430,20 @@ function exportRankCSV(){
   a.download = `ranking_${v}_${s}_${new Date().toISOString().slice(0,10)}.csv`; a.click();
 }
 
+function clearAllData(){
+  if(confirm("آیا مطمئن هستید؟ تمام اطلاعات پاک می‌شوند.")){
+    localStorage.removeItem(LS_DB);
+    loadData();
+  }
+}
+
 function switchTab(name){
-  document.getElementById("tabList").classList.toggle("hidden", name !== "list");
-  document.getElementById("tabRank").classList.toggle("hidden", name !== "rank");
-  document.getElementById("tabListBtn").classList.toggle("active", name === "list");
-  document.getElementById("tabRankBtn").classList.toggle("active", name === "rank");
-  if(name === "rank") renderRank(); if(name === "list") renderList();
+  ["import", "list", "rank"].forEach(n=>{
+    document.getElementById("tab"+n[0].toUpperCase()+n.slice(1)).classList.toggle("hidden", n !== name);
+    document.getElementById("tab"+n[0].toUpperCase()+n.slice(1)+"Btn").classList.toggle("active", n === name);
+  });
+  if(name === "rank") renderRank();
+  if(name === "list") renderList();
 }
 
 if(sessionStorage.getItem("pc_admin_auth") === "1"){ showMain(); }
