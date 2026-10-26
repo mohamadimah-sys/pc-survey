@@ -212,7 +212,12 @@ function showMain(){
 async function fetchAll(){
   const url = `${SUPABASE_URL}/rest/v1/evaluations?select=*&order=timestamp.desc`;
   const r = await fetch(url, {
-    headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+    method: 'GET',
+    headers: { 
+      "apikey": SUPABASE_KEY, 
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Accept": "application/json"
+    }
   });
   if(!r.ok){ const t = await r.text(); throw new Error("Supabase: " + t); }
   return await r.json();
