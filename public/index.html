@@ -15,9 +15,6 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
   .card h2{margin:0 0 12px;font-size:15px;color:var(--brand);display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #eef2f7;padding-bottom:8px}
   .card h2 .w{font-size:12px;background:#e6f4ee;color:var(--brand2);padding:2px 8px;border-radius:20px}
-  .field{margin-bottom:10px}
-  .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
-  .field select,.field input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;background:#fbfcfe}
   .ws-group{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed #eef2f7}
   .ws-group:last-child{border-bottom:none}
   .ws-title{font-size:14px;font-weight:700;color:var(--brand);margin-bottom:8px;padding:6px 10px;background:#f0f6fb;border-radius:8px}
@@ -54,27 +51,25 @@
 
 <header class="top">
   <h1>فرم ارزیابی عملکرد پیمانکاران</h1>
-  <p>ویژه رؤسای کارگاه و مدیران پروژه</p>
+  <p id="userHeader">در حال بارگذاری...</p>
 </header>
 
 <main>
-  <section id="scrLogin" class="card">
-    <h2>ورود به سامانه</h2>
-    <div class="field">
-      <label>نقش خود را انتخاب کنید</label>
-      <select id="userSel"></select>
+  <!-- صفحه عدم دسترسی -->
+  <section id="scrDenied" class="card hidden">
+    <div class="msg err" style="font-size:16px; text-align:center;">
+      ⛔ دسترسی غیرمجاز<br><br>
+      <span style="font-size:13px; font-weight:normal;">شما از طریق لینک اختصاصی خود وارد نشده‌اید. لطفاً لینک ارسال شده توسط مدیر پروژه را باز کنید.</span>
     </div>
-    <button class="primary" onclick="login()">ورود</button>
   </section>
 
+  <!-- لیست پیمانکاران (فقط بعد از تایید هویت) -->
   <section id="scrList" class="card hidden">
     <h2 id="listTitle"></h2>
     <div id="listBox"></div>
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="ghost" onclick="logout()">خروج</button>
-    </div>
   </section>
 
+  <!-- فرم -->
   <section id="scrForm" class="hidden">
     <div class="card">
       <h2 id="formTitle"></h2>
@@ -84,7 +79,7 @@
     <div id="formMsg"></div>
   </section>
 
-  <!-- صفحه قفل (بلافاصله بعد از ثبت) -->
+  <!-- صفحه قفل -->
   <section id="scrLocked" class="card hidden">
     <div class="msg ok" style="font-size:15px">✅ ارزیابی با موفقیت <b>ثبت و قفل</b> شد.</div>
     <div id="lockedDetails"></div>
@@ -94,7 +89,6 @@
       <button class="ghost" onclick="backToList()">بازگشت به لیست</button>
     </div>
 
-    <!-- کادر اختصاصی بازگشایی -->
     <div style="margin-top:15px; padding:15px; background:#fffbeb; border:1px dashed #fcd34d; border-radius:10px; text-align:center;">
       <div style="font-size:13px; color:#92400e; margin-bottom:10px;">آیا مدیر پروژه به شما کد بازگشایی داده است؟</div>
       <button class="ghost" style="color:#92400e; border-color:#fcd34d; width:100%;" onclick="promptUnlock()">🔑 ورود کد بازگشایی</button>
@@ -113,22 +107,23 @@
 const CONFIG = {
   salt: "pc-eval-v2-2025-immutable",
   eitaaEndpoint: "/api/send",
+  // 🔽 کدهای امنیتی (PIN) برای هر شخص اضافه شد 🔽
   workshops: [
-    { code:"W1",  name:"ایستگاه‌های مختلف پروژه", supervisor:"مهندس ادهم هاشمی", contractors:["محمود بیرجندی","داناب تهویه پارس گستر","احمد یزدی","تعاونی هشتصد و نود و پنج"] },
-    { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی"] },
-    { code:"W3",  name:"شهدا", supervisor:"مهندس آخوند زاده", contractors:["یاسر باقری قلعه جوق","سید محمد ثمره موسوی","نیک سازان برق مشهد","پیمانکاری راه مرد","توسعه اقتصادی فرزام"] },
-    { code:"W4",  name:"باب الجواد", supervisor:"مهندس علیدوست", contractors:["حسن خوش اندام"] },
-    { code:"W5",  name:"فردوسی", supervisor:"مهندس خوش طبخ", contractors:["رادین راه پیما"] },
-    { code:"W6",  name:"ابوذر", supervisor:"مهندس فیروزی", contractors:["حسن خوش اندام"] },
-    { code:"W7",  name:"بسیج", supervisor:"مهندس منتظریان", contractors:["شرکت گروه مهندسی سورنا سازه آریو","نیک سازان برق مشهد"] },
-    { code:"W8",  name:"شارستان", supervisor:"مهندس فلاح", contractors:["پیمانکاری راه مرد"] },
-    { code:"W9",  name:"لینک سه راهی", supervisor:"مهندس فیروزی", contractors:["شرکت گروه مهندسی سورنا سازه آریو"] },
-    { code:"W10", name:"میان تونلی", supervisor:"مهندس معلوم‌نیست", contractors:["توسعه اقتصادی فرزام"] }
+    { code:"W1",  name:"ایستگاه‌های مختلف پروژه", supervisor:"مهندس ادهم هاشمی", pin:"1001", contractors:["محمود بیرجندی","داناب تهویه پارس گستر","احمد یزدی","تعاونی هشتصد و نود و پنج"] },
+    { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", pin:"1002", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی"] },
+    { code:"W3",  name:"شهدا", supervisor:"مهندس آخوند زاده", pin:"1003", contractors:["یاسر باقری قلعه جوق","سید محمد ثمره موسوی","نیک سازان برق مشهد","پیمانکاری راه مرد","توسعه اقتصادی فرزام"] },
+    { code:"W4",  name:"باب الجواد", supervisor:"مهندس علیدوست", pin:"1004", contractors:["حسن خوش اندام"] },
+    { code:"W5",  name:"فردوسی", supervisor:"مهندس خوش طبخ", pin:"1005", contractors:["رادین راه پیما"] },
+    { code:"W6",  name:"ابوذر", supervisor:"مهندس فیروزی", pin:"1006", contractors:["حسن خوش اندام"] },
+    { code:"W7",  name:"بسیج", supervisor:"مهندس منتظریان", pin:"1007", contractors:["شرکت گروه مهندسی سورنا سازه آریو","نیک سازان برق مشهد"] },
+    { code:"W8",  name:"شارستان", supervisor:"مهندس فلاح", pin:"1008", contractors:["پیمانکاری راه مرد"] },
+    { code:"W9",  name:"لینک سه راهی", supervisor:"مهندس فیروزی", pin:"1006", contractors:["شرکت گروه مهندسی سورنا سازه آریو"] }, // مهندس فیروزی ۲ کارگاه دارد، پس یک PIN مشترک دارد
+    { code:"W10", name:"میان تونلی", supervisor:"مهندس معلوم‌نیست", pin:"1010", contractors:["توسعه اقتصادی فرزام"] }
   ],
   managers: [
-    { code:"PM", role:"مدیر پروژه", name:"" },
-    { code:"CM", role:"مدیر قراردادهای پروژه", name:"" },
-    { code:"SM", role:"مدیر ساخت پروژه", name:"" }
+    { code:"PM", role:"مدیر پروژه", name:"", pin:"2001" },
+    { code:"CM", role:"مدیر قراردادهای پروژه", name:"", pin:"2002" },
+    { code:"SM", role:"مدیر ساخت پروژه", name:"", pin:"2003" }
   ]
 };
 
@@ -192,25 +187,50 @@ function buildForm(){
   });
 }
 function updateTotal(){ document.getElementById("progress").textContent = `${toFa(Object.keys(scores).length)} از ${toFa(TOTAL_ITEMS)}`; document.getElementById("total").textContent = toFa(weightedTotal(scores).toFixed(1)); }
-function showScreen(name){ ["Login","List","Form","Locked"].forEach(s=>{ document.getElementById("scr"+s).classList.toggle("hidden", s.toLowerCase() !== name.toLowerCase()); }); document.getElementById("bar").classList.toggle("hidden", name !== "form"); }
+function showScreen(name){ ["Denied","List","Form","Locked"].forEach(s=>{ document.getElementById("scr"+s).classList.toggle("hidden", s.toLowerCase() !== name.toLowerCase()); }); document.getElementById("bar").classList.toggle("hidden", name !== "form"); }
 
+// ====== سیستم احراز هویت با URL ======
 function init(){
-  const sel = document.getElementById("userSel");
-  const supGroup = document.createElement("optgroup"); supGroup.label = "رؤسای کارگاه";
-  uniq(CONFIG.workshops.map(w => w.supervisor)).forEach(name=>{ const o = document.createElement("option"); o.value = "sup::" + name; o.textContent = name; supGroup.appendChild(o); }); sel.appendChild(supGroup);
-  const mgrGroup = document.createElement("optgroup"); mgrGroup.label = "مدیران پروژه";
-  CONFIG.managers.forEach(m=>{ const o = document.createElement("option"); o.value = "mgr::" + m.code; o.textContent = m.name ? `${m.role} — ${m.name}` : m.role; mgrGroup.appendChild(o); }); sel.appendChild(mgrGroup);
-  buildForm(); showScreen("login");
-}
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get("id");
+  const userPin = params.get("pin");
 
-function login(){
-  const val = document.getElementById("userSel").value;
-  if(val.startsWith("sup::")){ const name = val.slice(5); currentUser = { type:"sup", name, workshops: CONFIG.workshops.filter(w => w.supervisor === name) }; }
-  else { const code = val.slice(5); const m = CONFIG.managers.find(x=>x.code===code); if(!m) return; currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role }; }
-  document.getElementById("listTitle").textContent = currentUser.type === "sup" ? `کارگاه‌های تحت مسئولیت: ${currentUser.name}` : `ارزیابی همه پیمانکاران — ${currentUser.role}`;
-  showScreen("list"); renderList();
+  if(!userId || !userPin){
+    showScreen("denied");
+    document.getElementById("userHeader").textContent = "دسترسی غیرمجاز";
+    return;
+  }
+
+  // بررسی رؤسای کارگاه
+  if(userId.startsWith("sup_")){
+    const wCode = userId.replace("sup_", "");
+    const w = CONFIG.workshops.find(x => x.code === wCode && x.pin === userPin);
+    if(w){
+      // اگر چند کارگاه با همین نام و کد بود (مثل مهندس فیروزی)
+      const allWs = CONFIG.workshops.filter(x => x.supervisor === w.supervisor && x.pin === userPin);
+      currentUser = { type:"sup", name:w.supervisor, workshops: allWs };
+    }
+  }
+  // بررسی مدیران
+  else if(userId.startsWith("mgr_")){
+    const mCode = userId.replace("mgr_", "");
+    const m = CONFIG.managers.find(x => x.code === mCode && x.pin === userPin);
+    if(m){
+      currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role };
+    }
+  }
+
+  if(!currentUser){
+    showScreen("denied");
+    document.getElementById("userHeader").textContent = "کد امنیتی اشتباه است";
+    return;
+  }
+
+  // ورود موفق
+  document.getElementById("userHeader").textContent = `خوش آمدید، ${currentUser.name}`;
+  document.getElementById("listTitle").textContent = currentUser.type === "sup" ? `کارگاه‌های تحت مسئولیت شما` : `ارزیابی پیمانکاران`;
+  buildForm(); showScreen("list"); renderList();
 }
-function logout(){ currentUser = null; curTarget = null; scores = {}; showScreen("login"); }
 
 function renderList(){
   const box = document.getElementById("listBox"); box.innerHTML = "";
@@ -220,8 +240,6 @@ function renderList(){
       w.contractors.forEach(c=>{
         const id = `sup|${w.code}|${c}`, locked = isLocked(id);
         const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
-        
-        // دکمه بازگشایی به لیست اصلی اضافه شد
         d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>
           <div style="display:flex;gap:5px;flex-wrap:wrap;">
             ${locked ? 
@@ -238,7 +256,6 @@ function renderList(){
       const id = `mgr|${currentUser.code}|${c}`, locked = isLocked(id);
       const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ");
       const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
-      
       d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">کارگاه: ${ws}</div><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
           ${locked ? 
@@ -331,30 +348,24 @@ async function submitEval(){
 function downloadCurrentRecord(){ if(lastRec){ downloadJSON([lastRec], `نظرسنجی_${lastRec.supervisor}_${lastRec.contractor}.json`); } }
 function redownload(id){ const recs = getRecs(); const r = recs[id]; if(!r) return alert("رکورد یافت نشد."); downloadJSON([r], `نظرسنجی_${r.supervisor}_${r.contractor}.json`); }
 
-// ====== سیستم بازگشایی با کد مدیریت ======
 function makeUnlockCode(recordId) {
-  const secret = "ADMIN-UNLOCK-KEY-2025"; // کلید مخفی
+  const secret = "ADMIN-UNLOCK-KEY-2025";
   return simpleHash(secret + "|" + recordId).slice(0, 8).toUpperCase();
 }
 
 function promptUnlock(recordId) {
-  // اگر از لیست اومده باشد آیدی رو داره، اگر از صفحه قفل اومده باشه از lastRec می‌خونه
   const id = recordId || (lastRec ? lastRec.id : null);
   if (!id) return alert("خطا: رکورد یافت نشد.");
-  
   const code = prompt("کد بازگشایی را از مدیر پروژه بگیرید و اینجا وارد کنید:");
   if (code === null) return;
-  
   const expected = makeUnlockCode(id);
   if (code.trim().toUpperCase() !== expected) {
     alert("❌ کد بازگشایی نامعتبر است.\nکد را از مدیر پروژه دریافت کنید.");
     return;
   }
   if (!confirm("کد صحیح است. قفل این ارزیابی باز شود؟")) return;
-  
   const locks = getLocks(); delete locks[id]; localStorage.setItem(LS_LOCKS, JSON.stringify(locks));
   const recs = getRecs(); delete recs[id]; saveRecs(recs);
-  
   alert("✅ قفل باز شد. حالا می‌توانید دوباره ارزیابی کنید.");
   backToList();
 }
