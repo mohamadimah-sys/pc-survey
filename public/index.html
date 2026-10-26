@@ -88,10 +88,16 @@
   <section id="scrLocked" class="card hidden">
     <div class="msg ok" style="font-size:15px">✅ ارزیابی با موفقیت <b>ثبت و قفل</b> شد.</div>
     <div id="lockedDetails"></div>
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    
+    <div style="margin-top:15px; display:flex; gap:8px; flex-wrap:wrap;">
       <button class="primary" onclick="downloadCurrentRecord()">⬇️ دانلود فایل JSON</button>
       <button class="ghost" onclick="backToList()">بازگشت به لیست</button>
-      <button class="ghost" style="color:#92400e;border-color:#fcd34d;margin-inline-start:auto" onclick="promptUnlock()">🔑 کد بازگشایی دارم</button>
+    </div>
+
+    <!-- کادر اختصاصی بازگشایی -->
+    <div style="margin-top:15px; padding:15px; background:#fffbeb; border:1px dashed #fcd34d; border-radius:10px; text-align:center;">
+      <div style="font-size:13px; color:#92400e; margin-bottom:10px;">آیا مدیر پروژه به شما کد بازگشایی داده است؟</div>
+      <button class="ghost" style="color:#92400e; border-color:#fcd34d; width:100%;" onclick="promptUnlock()">🔑 ورود کد بازگشایی</button>
     </div>
   </section>
 </main>
