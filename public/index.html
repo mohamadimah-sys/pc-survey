@@ -58,7 +58,7 @@
   <section id="scrDenied" class="card hidden">
     <div class="msg err" style="font-size:16px; text-align:center;">
       ⛔ دسترسی غیرمجاز<br><br>
-      <span style="font-size:13px; font-weight:normal;">شما از طریق لینک اختصاصی خود وارد نشده‌اید. لطفاً لینک ارسال شده توسط مدیر پروژه را باز کنید.</span>
+      <span style="font-size:13px; font-weight:normal;">شما از طریق لینک اختصاصی خود وارد نشده‌اید. لطفاً لینک ارسال شده توسط مدیریت نظارت و بازرسی نمایندگی را باز کنید.</span>
     </div>
   </section>
 
@@ -103,6 +103,9 @@
 const CONFIG = {
   salt: "pc-eval-v2-2025-immutable",
   eitaaEndpoint: "/api/send",
+  // 👇 پیمانکارانی که سرپرست کارگاهی ندارند و توسط مدیران ارزیابی می‌شوند
+  specialContractors: ["محمود بیرجندی", "داناب تهویه پارس گستر", "احمد یزدی", "تعاونی هشتصد و نود و پنج"],
+  
   workshops: [
     { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", pin:"1002", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی", "پیمانکاری ظریف", "فتاح احمدی بابادی"] },
     { code:"W3",  name:"شهدا", supervisor:"مهندس آخوند زاده", pin:"1003", contractors:["یاسر باقری قلعه جوق","سید محمد ثمره موسوی","نیک سازان برق مشهد","پیمانکاری راه مرد","توسعه اقتصادی فرزام"] },
@@ -167,7 +170,13 @@ function saveRecs(o){ localStorage.setItem(LS_RECS, JSON.stringify(o)); }
 function isLocked(recordId){ return !!getLocks()[recordId]; }
 function downloadJSON(obj, fn){ const b = new Blob([JSON.stringify(obj,null,2)],{type:"application/json;charset=utf-8"}); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = fn; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000); }
 function uniq(arr){ return [...new Set(arr)]; }
-function allContractors(){ return uniq(CONFIG.workshops.flatMap(w => w.contractors)); }
+
+// 👇 اصلاح تابع دریافت لیست پیمانکاران برای شامل شدن پیمانکاران ویژه
+function allContractors(){ 
+  const fromWs = CONFIG.workshops.flatMap(w => w.contractors);
+  return uniq([...fromWs, ...(CONFIG.specialContractors || [])]); 
+}
+
 function contractorWorkshops(name){ return CONFIG.workshops.filter(w => w.contractors.includes(name)); }
 function recordHash(r){ return simpleHash(CONFIG.salt + "|" + r.id + "|" + r.supervisor + "|" + r.contractor + "|" + JSON.stringify(r.scores) + "|" + r.total + "|" + r.timestamp); }
 
@@ -279,7 +288,7 @@ function renderList(){
 
     listToRender.forEach(c=>{
       const id = `mgr|${currentUser.code}|${c}`, locked = isLocked(id);
-      const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ") || "—";
+      const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ") || "ویژه (بدون کارگاه)";
       const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
       d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">کارگاه: ${ws}</div><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
@@ -306,7 +315,7 @@ function openFormMgr(contractor){
   const id = `mgr|${currentUser.code}|${contractor}`; if(isLocked(id)) return alert("قبلاً ثبت شده.");
   curTarget = { contractor, isMgr:true }; scores = {}; document.querySelectorAll(".scale button").forEach(b=>b.classList.remove("on")); updateTotal();
   document.getElementById("formTitle").textContent = `ارزیابی: ${contractor}`;
-  document.getElementById("formHint").textContent = `کارگاه‌ها: ${contractorWorkshops(contractor).map(w=>w.name).join(" ، ") || "—"} — ارزیاب: ${currentUser.role}`;
+  document.getElementById("formHint").textContent = `کارگاه‌ها: ${contractorWorkshops(contractor).map(w=>w.name).join(" ، ") || "ویژه"} — ارزیاب: ${currentUser.role}`;
   document.getElementById("formMsg").innerHTML = `<div class="msg warn">⚠️ با ثبت نهایی، امتیازها دائماً قفل می‌شوند.</div>`; showScreen("form"); window.scrollTo({top:0, behavior:"smooth"});
 }
 function cancelForm(){ if(Object.keys(scores).length > 0 && !confirm("انصراف؟")) return; curTarget = null; scores = {}; showScreen("list"); renderList(); }
