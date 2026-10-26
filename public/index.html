@@ -55,7 +55,6 @@
 </header>
 
 <main>
-  <!-- صفحه عدم دسترسی -->
   <section id="scrDenied" class="card hidden">
     <div class="msg err" style="font-size:16px; text-align:center;">
       ⛔ دسترسی غیرمجاز<br><br>
@@ -63,13 +62,11 @@
     </div>
   </section>
 
-  <!-- لیست پیمانکاران -->
   <section id="scrList" class="card hidden">
     <h2 id="listTitle"></h2>
     <div id="listBox"></div>
   </section>
 
-  <!-- فرم -->
   <section id="scrForm" class="hidden">
     <div class="card">
       <h2 id="formTitle"></h2>
@@ -79,7 +76,6 @@
     <div id="formMsg"></div>
   </section>
 
-  <!-- صفحه قفل -->
   <section id="scrLocked" class="card hidden">
     <div class="msg ok" style="font-size:15px">✅ ارزیابی با موفقیت <b>ثبت و قفل</b> شد.</div>
     <div id="lockedDetails"></div>
@@ -109,20 +105,22 @@ const CONFIG = {
   eitaaEndpoint: "/api/send",
   workshops: [
     { code:"W1",  name:"ایستگاه‌های مختلف پروژه", supervisor:"مهندس ادهم هاشمی", pin:"1001", contractors:["محمود بیرجندی","داناب تهویه پارس گستر","احمد یزدی","تعاونی هشتصد و نود و پنج"] },
-    { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", pin:"1002", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی"] },
+    { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", pin:"1002", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی", "پیمانکاری ظریف", "فتاح احمدی بابادی"] },
     { code:"W3",  name:"شهدا", supervisor:"مهندس آخوند زاده", pin:"1003", contractors:["یاسر باقری قلعه جوق","سید محمد ثمره موسوی","نیک سازان برق مشهد","پیمانکاری راه مرد","توسعه اقتصادی فرزام"] },
     { code:"W4",  name:"باب الجواد", supervisor:"مهندس علیدوست", pin:"1004", contractors:["حسن خوش اندام"] },
-    { code:"W5",  name:"فردوسی", supervisor:"مهندس خوش طبخ", pin:"1005", contractors:["رادین راه پیما"] },
+    { code:"W5",  name:"فردوسی", supervisor:"مهندس خوش طبخ", pin:"1005", contractors:["رادین راه پیمان"], extraContractors:["محمود بیرجندی"] },
     { code:"W6",  name:"ابوذر", supervisor:"مهندس فیروزی", pin:"1006", contractors:["حسن خوش اندام"] },
     { code:"W7",  name:"بسیج", supervisor:"مهندس منتظریان", pin:"1007", contractors:["شرکت گروه مهندسی سورنا سازه آریو","نیک سازان برق مشهد"] },
     { code:"W8",  name:"شارستان", supervisor:"مهندس فلاح", pin:"1008", contractors:["پیمانکاری راه مرد"] },
     { code:"W9",  name:"لینک سه راهی", supervisor:"مهندس فیروزی", pin:"1006", contractors:["شرکت گروه مهندسی سورنا سازه آریو"] },
-    { code:"W10", name:"میان تونلی", supervisor:"مهندس معلوم‌نیست", pin:"1010", contractors:["توسعه اقتصادی فرزام"] }
+    { code:"W10", name:"میان تونلی", supervisor:"مهندس کاشف", pin:"1010", contractors:["توسعه اقتصادی فرزام"] }
   ],
   managers: [
-    { code:"PM", role:"مدیر پروژه", name:"", pin:"2001" },
-    { code:"CM", role:"مدیر قراردادهای پروژه", name:"", pin:"2002" },
-    { code:"SM", role:"مدیر ساخت پروژه", name:"", pin:"2003" }
+    { code:"PM", role:"مدیر پروژه", pin:"2001", assignedContractors: null },
+    { code:"CM", role:"مدیر قراردادهای پروژه", pin:"2002", assignedContractors: null },
+    { code:"SM", role:"مدیر ساخت پروژه", pin:"2003", assignedContractors: ["توسعه اقتصادی فرزام", "محمود بیرجندی", "داناب تهویه پارس گستر"] },
+    { code:"SPM", role:"مدیر پشتیبانی پروژه", pin:"2004", assignedContractors: ["تعاونی هشتصد و نود و پنج", "محمود بیرجندی", "داناب تهویه پارس گستر"] },
+    { code:"PMO", role:"دفتر مدیریت پروژه", pin:"2005", assignedContractors: ["تعاونی هشتصد و نود و پنج"] }
   ],
   master: { code:"MASTER", role:"مدیر ارشد (کنترل)", name:"مدیر ارشد", pin:"9999" }
 };
@@ -137,7 +135,8 @@ const CRITERIA = [
     { id:"c3", w:6, t:"حسن سابقه و اعتبار" }
   ]},
   { key:"value", group:"۳) اخلاقی، اعتقادی و سیاسی", gw:20, items:[
-    { id:"v1", w:6, t:"پایبندی به ارزش‌های اخلاقی و اعتقادی" }, { id:"v2", w:4, t:"رفتار سیاسی مسئولانه" },
+    { id:"v1", w:6, t:"پایبندی به ارزش‌های اخلاقی و اعتقادی و کمک‌های مالی در خصوص مسائل محرومیت‌زدایی و فرهنگی" }, 
+    { id:"v2", w:4, t:"رفتار سیاسی مسئولانه" },
     { id:"v3", w:4, t:"صداقت، شفافیت و سلامت اداری" }, { id:"v4", w:4, t:"کرامت، عدالت و عدم تبعیض" }, { id:"v5", w:2, t:"فرهنگ سازمانی" }
   ]},
   { key:"hr", group:"۴) نیروی انسانی و حقوق کارکنان", gw:30, items:[
@@ -189,19 +188,15 @@ function buildForm(){
 function updateTotal(){ document.getElementById("progress").textContent = `${toFa(Object.keys(scores).length)} از ${toFa(TOTAL_ITEMS)}`; document.getElementById("total").textContent = toFa(weightedTotal(scores).toFixed(1)); }
 function showScreen(name){ ["Denied","List","Form","Locked"].forEach(s=>{ document.getElementById("scr"+s).classList.toggle("hidden", s.toLowerCase() !== name.toLowerCase()); }); document.getElementById("bar").classList.toggle("hidden", name !== "form"); }
 
-// ====== سیستم احراز هویت با URL ======
 function init(){
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("id");
   const userPin = params.get("pin");
 
   if(!userId || !userPin){
-    showScreen("denied");
-    document.getElementById("userHeader").textContent = "دسترسی غیرمجاز";
-    return;
+    showScreen("denied"); document.getElementById("userHeader").textContent = "دسترسی غیرمجاز"; return;
   }
 
-  // بررسی رؤسای کارگاه
   if(userId.startsWith("sup_")){
     const wCode = userId.replace("sup_", "");
     const w = CONFIG.workshops.find(x => x.code === wCode && x.pin === userPin);
@@ -210,28 +205,23 @@ function init(){
       currentUser = { type:"sup", name:w.supervisor, workshops: allWs };
     }
   }
-  // بررسی مدیران
   else if(userId.startsWith("mgr_")){
     const mCode = userId.replace("mgr_", "");
     const m = CONFIG.managers.find(x => x.code === mCode && x.pin === userPin);
     if(m){
-      currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role };
+      currentUser = { type:"mgr", code:m.code, role:m.role, name:m.name || m.role, assignedContractors: m.assignedContractors };
     }
   }
-  // بررسی مدیر ارشد
   else if(userId === "master"){
     if(userPin === CONFIG.master.pin){
-      currentUser = { type:"mgr", code:CONFIG.master.code, role:CONFIG.master.role, name:CONFIG.master.name, isMaster: true };
+      currentUser = { type:"mgr", code:CONFIG.master.code, role:CONFIG.master.role, name:CONFIG.master.name, isMaster: true, assignedContractors: null };
     }
   }
 
   if(!currentUser){
-    showScreen("denied");
-    document.getElementById("userHeader").textContent = "کد امنیتی اشتباه است";
-    return;
+    showScreen("denied"); document.getElementById("userHeader").textContent = "کد امنیتی اشتباه است"; return;
   }
 
-  // ورود موفق
   document.getElementById("userHeader").textContent = `خوش آمدید، ${currentUser.name}`;
   document.getElementById("listTitle").textContent = currentUser.type === "sup" ? `کارگاه‌های تحت مسئولیت شما` : `ارزیابی پیمانکاران`;
   buildForm(); showScreen("list"); renderList();
@@ -239,10 +229,13 @@ function init(){
 
 function renderList(){
   const box = document.getElementById("listBox"); box.innerHTML = "";
+  
   if(currentUser.type === "sup"){
     currentUser.workshops.forEach(w=>{
       const group = document.createElement("div"); group.className = "ws-group"; group.innerHTML = `<div class="ws-title">🏗️ ${w.name}</div>`;
-      w.contractors.forEach(c=>{
+      const allC = [...w.contractors, ...(w.extraContractors || [])];
+
+      allC.forEach(c=>{
         const id = `sup|${w.code}|${c}`, locked = isLocked(id);
         const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
         d.innerHTML = `<div style="flex:1"><b>${c}</b><div class="st">${locked ? "🔒 ثبت شده" : "بدون ارزیابی"}</div></div>
@@ -254,10 +247,10 @@ function renderList(){
               `<button class="primary" onclick="openForm('${w.code}','${esc(c)}')">شروع ارزیابی</button>`}
           </div>`;
         group.appendChild(d);
-      }); box.appendChild(group);
+      }); 
+      box.appendChild(group);
     });
   } else {
-    // دکمه اختصاصی مدیر ارشد برای ریست کردن حافظه
     if(currentUser.isMaster) {
       const resetBtn = document.createElement("button");
       resetBtn.className = "danger";
@@ -274,7 +267,14 @@ function renderList(){
       box.appendChild(resetBtn);
     }
 
-    allContractors().forEach(c=>{
+    let listToRender = [];
+    if (currentUser.assignedContractors && currentUser.assignedContractors.length > 0) {
+      listToRender = currentUser.assignedContractors;
+    } else {
+      listToRender = allContractors();
+    }
+
+    listToRender.forEach(c=>{
       const id = `mgr|${currentUser.code}|${c}`, locked = isLocked(id);
       const ws = contractorWorkshops(c).map(w=>w.name).join(" ، ");
       const d = document.createElement("div"); d.className = "cbox" + (locked ? " locked" : "");
