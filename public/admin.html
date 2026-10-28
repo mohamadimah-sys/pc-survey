@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>پنل مدیریت (آفلاین) — رتبه‌بندی و تحلیل</title>
+<title>پنل مدیریت (آفلاین/آنلاین) — رتبه‌بندی و تحلیل</title>
 <style>
   :root{--bg:#f4f6f9;--card:#fff;--ink:#1f2937;--muted:#6b7280;--brand:#0f5c8c;--brand2:#0d7a5f;--line:#e2e8f0}
   *{box-sizing:border-box}
@@ -30,6 +30,7 @@
   .btn.danger{background:#dc2626}
   .btn.warn{background:#d97706;color:#fff}
   .btn.print{background:#0d7a5f}
+  .btn.cloud{background:#0284c7;width:100%;padding:12px;font-size:14px;margin-top:10px}
   .msg{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:10px}
   .msg.ok{background:#e6f4ee;color:#0a5c46;border:1px solid #b7e4d3}
   .msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
@@ -55,7 +56,6 @@
   .login-box{max-width:380px;margin:60px auto;padding:24px;background:#fff;border:1px solid var(--line);border-radius:16px;text-align:center}
   .login-box input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px;font-family:inherit;font-size:15px;text-align:center;letter-spacing:3px}
   
-  /* استایل‌های تحلیل عمیق */
   .analysis-box{background:#fff;border-radius:12px;padding:15px;margin-bottom:15px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,0.05)}
   .proj-stat-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;margin-bottom:20px}
   .proj-stat{background:#f0f6fb;border:1px solid #d0e2f1;padding:12px;border-radius:12px;text-align:center}
@@ -75,7 +75,6 @@
 
 <div id="screenLogin" class="login-box">
   <h2 style="color:#0f5c8c;margin-top:0">🔐 ورود به پنل مدیریت</h2>
-  <p style="color:#6b7280;font-size:13px">رمز عبور را وارد کنید</p>
   <input type="password" id="pwdInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') tryUnlock()">
   <button class="btn" style="width:100%" onclick="tryUnlock()">ورود</button>
   <div id="pwdError" class="hidden" style="color:#dc2626;font-size:12px;margin-top:8px"></div>
@@ -83,13 +82,13 @@
 
 <div id="screenMain" class="hidden">
   <header class="top">
-    <h1>داشبورد مدیریت پروژه <span style="font-size:12px;font-weight:400;opacity:.8">— آفلاین</span></h1>
+    <h1>داشبورد مدیریت <span style="font-size:12px;font-weight:400;opacity:.8">— اصلی</span></h1>
     <p><a href="#" onclick="logout();return false;" style="color:#fca5a5">🚪 خروج</a></p>
   </header>
 
   <div class="tabs">
     <button id="tabImportBtn" class="active" onclick="switchTab('import')">📥 دریافت</button>
-    <button id="tabStatusBtn" onclick="switchTab('status')">📊 وضعیت ارسال‌ها</button>
+    <button id="tabStatusBtn" onclick="switchTab('status')">📊 وضعیت</button>
     <button id="tabListBtn" onclick="switchTab('list')">📋 ارزیابی‌ها</button>
     <button id="tabRankBtn" onclick="switchTab('rank')">🏆 رتبه‌بندی</button>
     <button id="tabAnalysisBtn" onclick="switchTab('analysis')">📈 تحلیل عمیق</button>
@@ -100,24 +99,27 @@
 
     <section id="tabImport">
       <div class="card">
-        <h2>دریافت فایل‌های ارزیابی (از ایتا)</h2>
+        <h2>دریافت و انتشار داده‌ها</h2>
         <div class="grid2">
           <div>
             <div class="field"><label>بارگذاری فایل‌های JSON</label><input type="file" id="fileInput" accept=".json" multiple></div>
           </div>
           <div>
-            <div class="field"><label>یا چسباندن محتوای JSON</label><textarea id="pasteBox" placeholder='[{"id":"...","supervisor":"...","contractor":"...","scores":{},"hash":"..."}]'></textarea></div>
+            <div class="field"><label>یا چسباندن محتوای JSON</label><textarea id="pasteBox" placeholder='[...]'></textarea></div>
             <button class="btn ghost" onclick="importPaste()">افزودن از متن</button>
           </div>
         </div>
-        <div class="hint">فایل‌های تکراری و دست‌کاری‌شده به طور خودکار رد می‌شوند. <b>اگر فایل جدیدتری برای یک پیمانکار آپلود کنید، جایگزین فایل قبلی شده و نیاز به تایید مجدد دارد.</b></div>
+        <div class="hint">فایل‌های تکراری رد می‌شوند. اگر فایل جدیدتری آپلود کنید، جایگزین می‌شود.</div>
+        
+        <hr style="border:0; border-top:1px dashed #ccc; margin:20px 0">
+        <button class="btn cloud" onclick="publishToCloud()">☁️ انتشار آنلاین داده‌های تاییدشده (برای مدیر پروژه)</button>
+        <div class="hint" style="text-align:center">با کلیک روی این دکمه، تمام اطلاعات تاییدشده به سرور ابری ارسال می‌شوند تا پنل مدیر پروژه آن‌ها را ببیند.</div>
       </div>
     </section>
 
     <section id="tabStatus" class="hidden">
       <div class="card">
         <h2>وضعیت دریافت فرم‌ها <span class="w" id="statusProgress">۰ / ۰</span></h2>
-        <div class="hint" style="margin-bottom:15px">این جدول بر اساس چارت سازمانی پروژه ساخته شده است. اگر کسی فرمی نفرستاده باشد، با رنگ قرمز مشخص می‌شود.</div>
         <div class="scroll"><table id="statusTable"><thead><tr><th>نقش</th><th>نام ارزیاب</th><th>پیمانکار هدف</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
@@ -128,7 +130,7 @@
         <div class="filters">
           <label>فیلتر:</label>
           <select id="filterStatus" onchange="renderList()">
-            <option value="all">همه وضعیت‌ها</option><option value="pending">در انتظار تایید</option>
+            <option value="all">همه</option><option value="pending">در انتظار</option>
             <option value="approved">تاییدشده</option><option value="rejected">رد‌شده</option>
           </select>
         </div>
@@ -156,7 +158,7 @@
         <div class="proj-stat-grid" id="projStats"></div>
       </div>
       <div class="card">
-        <h2>تحلیل عملکرد پیمانکاران (بر اساس ۱۷ زیرشاخه)</h2>
+        <h2>تحلیل عملکرد پیمانکاران</h2>
         <div id="analysisContainer"></div>
       </div>
     </section>
@@ -191,10 +193,10 @@ const CONFIG = {
 };
 
 const CRITERIA = [
-  { key:"tech", label:"فنی و اجرایی", items:[{id:"t1",w:12, t:"کیفیت اجرا و انطباق فنی"},{id:"t2",w:8, t:"برنامه‌ریزی و کنترل زمان"},{id:"t3",w:5, t:"تجهیزات و ماشین‌آلات"},{id:"t4",w:5, t:"ایمنی، بهداشت و محیط زیست (HSE)"}]},
-  { key:"contract", label:"قراردادی و مدیریتی", items:[{id:"c1",w:8, t:"تعامل و پاسخگویی با کارفرما و ناظر"},{id:"c2",w:6, t:"مدیریت اداری و مستندسازی"},{id:"c3",w:6, t:"حسن سابقه و اعتبار"}]},
-  { key:"value", label:"اخلاقی، اعتقادی و سیاسی", items:[{id:"v1",w:6, t:"پایبندی به ارزش‌های اخلاقی و اعتقادی"},{id:"v2",w:4, t:"رفتار سیاسی مسئولانه"},{id:"v3",w:4, t:"صداقت، شفافیت و سلامت اداری"},{id:"v4",w:4, t:"کرامت، عدالت و عدم تبعیض"},{id:"v5",w:2, t:"فرهنگ سازمانی"}]},
-  { key:"hr", label:"نیروی انسانی", items:[{id:"h1",w:12, t:"پرداخت به‌موقع حقوق"},{id:"h2",w:8, t:"بیمه و تأمین اجتماعی"},{id:"h3",w:5, t:"رفاه، ایمنی روانی و شرایط کار"},{id:"h4",w:5, t:"آموزش و توانمندسازی"}]}
+  { key:"tech", label:"فنی و اجرایی", items:[{id:"t1",w:12, t:"کیفیت اجرا"},{id:"t2",w:8, t:"برنامه‌ریزی"},{id:"t3",w:5, t:"تجهیزات"},{id:"t4",w:5, t:"ایمنی (HSE)"}]},
+  { key:"contract", label:"قراردادی", items:[{id:"c1",w:8, t:"تعامل با کارفرما"},{id:"c2",w:6, t:"مدیریت اداری"},{id:"c3",w:6, t:"حسن سابقه"}]},
+  { key:"value", label:"ارزشی و اخلاقی", items:[{id:"v1",w:6, t:"ارزش‌های اخلاقی"},{id:"v2",w:4, t:"رفتار سیاسی"},{id:"v3",w:4, t:"صداقت"},{id:"v4",w:4, t:"کرامت"},{id:"v5",w:2, t:"فرهنگ سازمانی"}]},
+  { key:"hr", label:"نیروی انسانی", items:[{id:"h1",w:12, t:"پرداخت حقوق"},{id:"h2",w:8, t:"بیمه"},{id:"h3",w:5, t:"رفاه"},{id:"h4",w:5, t:"آموزش"}]}
 ];
 const ALL_ITEMS = CRITERIA.flatMap(g=>g.items.map(i=>({...i, gkey:g.key, glabel:g.label})));
 
@@ -221,17 +223,14 @@ function tryUnlock(){
 function logout(){ sessionStorage.removeItem("pc_admin_auth"); location.reload(); }
 function showMain(){ document.getElementById("screenLogin").classList.add("hidden"); document.getElementById("screenMain").classList.remove("hidden"); populateRankView(); loadData(); }
 
-// آپدیت منطق آپلود: جایگزینی فایل‌های جدیدتر
+// آپلود دستی
 document.getElementById("fileInput").addEventListener("change", async e=>{
   const files = [...e.target.files]; let ok=0, dup=0, bad=0, upd=0;
   for(const f of files){
     try{ const txt = await f.text(); const parsed = JSON.parse(txt); const arr = Array.isArray(parsed) ? parsed : [parsed];
       arr.forEach(r=>{ 
         const res = importRecord(r); 
-        if(res === "ok") ok++; 
-        else if(res === "dup") dup++; 
-        else if(res === "updated") upd++;
-        else bad++; 
+        if(res === "ok") ok++; else if(res === "dup") dup++; else if(res === "updated") upd++; else bad++; 
       });
     }catch(err){ bad++; }
   }
@@ -245,10 +244,7 @@ function importPaste(){
     let ok=0, dup=0, bad=0, upd=0;
     arr.forEach(r=>{ 
       const res = importRecord(r); 
-      if(res==="ok") ok++; 
-      else if(res==="dup") dup++; 
-      else if(res==="updated") upd++;
-      else bad++; 
+      if(res==="ok") ok++; else if(res==="dup") dup++; else if(res==="updated") upd++; else bad++; 
     });
     showMsg("ok", `${toFa(ok)} افزوده — ${toFa(upd)} آپدیت شد — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`); 
     document.getElementById("pasteBox").value = ""; loadData();
@@ -258,25 +254,38 @@ function importPaste(){
 function importRecord(r){
   if(!r || !r.id || !r.supervisor || !r.contractor || !r.scores || !r.hash) return "bad";
   const db = getDb(); 
-  
-  // بررسی اینکه آیا رکورد وجود دارد و آیا فایل جدیدتر است
   if(db.records[r.id]) {
     const oldTime = new Date(db.records[r.id].record.timestamp).getTime();
     const newTime = new Date(r.timestamp).getTime();
-    
     if (newTime > oldTime) {
-      // فایل جدید است، جایگزین می‌شود و به حالت "در انتظار تایید" برمی‌گردد
-      db.records[r.id] = { record:r, status:"pending", importedAt:new Date().toISOString() };
-      saveDb(db); 
-      return "updated";
-    } else {
-      return "dup"; // دقیقاً همان فایل قبلی است
-    }
+      db.records[r.id] = { record:r, status:"pending", importedAt:new Date().toISOString() }; saveDb(db); return "updated";
+    } else { return "dup"; }
   }
-  
-  // رکورد جدید
   db.records[r.id] = { record:r, status:"pending", importedAt:new Date().toISOString() };
   saveDb(db); return "ok";
+}
+
+// ارسال به ابر (آنلاین کردن برای مدیر پروژه)
+async function publishToCloud(){
+  const db = getDb();
+  const approved = Object.values(db.records).filter(e => e.status === "approved").map(e => e.record);
+  if(approved.length === 0) return alert("هیچ ارزیابی تاییدشده‌ای برای انتشار وجود ندارد.");
+  
+  if(!confirm(`آیا می‌خواهید ${approved.length} ارزیابی تاییدشده را آنلاین کنید تا مدیر پروژه ببیند؟`)) return;
+  
+  showMsg("warn", "در حال ارسال به سرور ابری...");
+  try {
+    const res = await fetch("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(approved)
+    });
+    const data = await res.json();
+    if(data.status === "ok") showMsg("ok", "☁️ داده‌ها با موفقیت آنلاین شدند! مدیر پروژه اکنون می‌تواند آن‌ها را ببیند.");
+    else throw new Error(data.message);
+  } catch(err) {
+    showMsg("err", "خطا در ارتباط با سرور: " + err.message);
+  }
 }
 
 function loadData(){
@@ -300,15 +309,8 @@ function approve(id){ if(!confirm("تایید شود؟")) return; updateRow(id, 
 function reject(id){ const reason = prompt("دلیل رد:"); if(reason === null) return; updateRow(id, { status: "rejected", note: reason }); showMsg("ok", "✓ رد شد"); }
 function reopen(id){ const typed = prompt("برای بازگشایی، عبارت «لغو» را تایپ کنید:"); if(typed !== "لغو") return alert("عبارت اشتباه."); updateRow(id, { status: "pending", note: null }); showMsg("ok", "✓ بازگشایی شد"); }
 
-// کلید بازگشایی
-function makeUnlockCode(recordId) {
-  const secret = "ADMIN-UNLOCK-KEY-2025";
-  return simpleHash(secret + "|" + recordId).slice(0, 8).toUpperCase();
-}
-function showUnlockCode(recordId, info) {
-  const code = makeUnlockCode(recordId);
-  prompt(`🔑 کد بازگشایی برای:\n${info}\n\nکد را کپی کرده و به ارزیاب بدهید:`, code);
-}
+function makeUnlockCode(recordId) { return simpleHash("ADMIN-UNLOCK-KEY-2025|" + recordId).slice(0, 8).toUpperCase(); }
+function showUnlockCode(recordId, info) { prompt(`🔑 کد بازگشایی:\n${info}`, makeUnlockCode(recordId)); }
 
 function renderStatus(){
   let expected = [];
@@ -331,8 +333,8 @@ function renderStatus(){
     let ops = "-";
     let statusHtml = isDone ? `<span class="badge approved">✓ دریافت شد</span>` : `<span class="badge missing">✕ نفرستاده</span>`;
     if(!isDone){
-      const msg = `جناب آقای ${item.name}، احتراماً، فرم ارزیابی پیمانکار «${item.target}» هنوز دریافت نشده است. لطفاً نسبت به تکمیل فرم از طریق لینک اختصاصی خود اقدام فرمایید. با تشکر - مدیریت نظارت و بازرسی`;
-      ops = `<button class="btn warn" onclick="navigator.clipboard.writeText('${msg}'); alert('متن یادآوری کپی شد!');">کپی متن یادآوری</button>`;
+      const msg = `جناب آقای ${item.name}، فرم ارزیابی «${item.target}» دریافت نشده است.`;
+      ops = `<button class="btn warn" onclick="navigator.clipboard.writeText('${msg}'); alert('کپی شد!');">کپی یادآوری</button>`;
     }
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${item.role}</td><td>${item.name}</td><td class="name">${item.target}</td><td>${statusHtml}</td><td>${ops}</td>`;
@@ -352,18 +354,13 @@ function renderList(){
     const badgeCls = r.status === "approved" ? "approved" : r.status === "rejected" ? "rejected" : "pending";
     const badgeTxt = r.status === "approved" ? "✓ تایید" : r.status === "rejected" ? "✕ رد" : "⏳ انتظار";
     const typeBadge = r.evaluator_type === "manager" ? `<span class="tag mgr">مدیر</span>` : `<span class="tag">رئیس</span>`;
+    let ops = r.status === "pending" 
+      ? `<button class="btn ok" onclick="approve('${esc(r.id)}')">✓</button> <button class="btn danger" onclick="reject('${esc(r.id)}')">✕</button>`
+      : `<button class="btn ghost" onclick="reopen('${esc(r.id)}')">بازگشایی</button>`;
+    const unlockBtn = `<button class="btn ghost" style="color:#92400e;border-color:#fcd34d" onclick="showUnlockCode('${esc(r.id)}', '${esc(r.supervisor)}')">🔑</button>`;
     
-    let ops = "";
-    if(r.status === "pending"){
-      ops = `<button class="btn ok" onclick="approve('${esc(r.id)}')">✓</button> <button class="btn danger" onclick="reject('${esc(r.id)}')">✕</button>`;
-    } else {
-      ops = `<button class="btn ghost" onclick="reopen('${esc(r.id)}')">بازگشایی</button>`;
-    }
-    const unlockBtn = `<button class="btn ghost" style="color:#92400e;border-color:#fcd34d" onclick="showUnlockCode('${esc(r.id)}', '${esc(r.supervisor)} → ${esc(r.contractor)}')">🔑</button>`;
-    ops = unlockBtn + " " + ops;
-
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${r.supervisor}</td><td>${typeBadge}</td><td>${r.workshopName || "—"}</td><td class="name">${r.contractor}</td><td>${new Date(r.timestamp).toLocaleString("fa-IR")}</td><td><b>${toFa(Number(r.total).toFixed(1))}</b></td><td><span class="badge ${badgeCls}">${badgeTxt}</span>${r.note?`<div class="hint">${r.note}</div>`:""}</td><td>${ops}</td>`;
+    tr.innerHTML = `<td>${r.supervisor}</td><td>${typeBadge}</td><td>${r.workshopName || "—"}</td><td class="name">${r.contractor}</td><td>${new Date(r.timestamp).toLocaleString("fa-IR")}</td><td><b>${toFa(Number(r.total).toFixed(1))}</b></td><td><span class="badge ${badgeCls}">${badgeTxt}</span>${r.note?`<div class="hint">${r.note}</div>`:""}</td><td>${unlockBtn} ${ops}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -396,7 +393,7 @@ function getAggregatedData(){
 function renderRank(){
   const tbody = document.querySelector("#rankTable tbody"); tbody.innerHTML = "";
   const agg = getAggregatedData();
-  if(!agg.length){ tbody.innerHTML = `<tr><td colspan="9" style="padding:18px;color:#6b7280">ارزیابی تاییدشده‌ای وجود ندارد.</td></tr>`; return; }
+  if(!agg.length){ tbody.innerHTML = `<tr><td colspan="9" style="padding:18px;color:#6b7280">داده‌ای وجود ندارد.</td></tr>`; return; }
 
   agg.forEach((c, idx)=>{
     const tr = document.createElement("tr"); if(idx === 0) tr.className = "rank1";
@@ -415,7 +412,7 @@ function renderAnalysis(){
   const agg = getAggregatedData();
   const projStats = document.getElementById("projStats");
   const container = document.getElementById("analysisContainer");
-  if(!agg.length) { projStats.innerHTML = "<div style='color:#6b7280'>داده‌ای برای تحلیل وجود ندارد.</div>"; container.innerHTML = ""; return; }
+  if(!agg.length) { projStats.innerHTML = "<div style='color:#6b7280'>داده‌ای وجود ندارد.</div>"; container.innerHTML = ""; return; }
   
   let projAvg = { tech:0, contract:0, value:0, hr:0, total:0 };
   agg.forEach(c => { projAvg.tech += c.groups.tech; projAvg.contract += c.groups.contract; projAvg.value += c.groups.value; projAvg.hr += c.groups.hr; projAvg.total += c.avg; });
@@ -448,9 +445,9 @@ function renderAnalysis(){
 
     let actionBox = "";
     if(bottom3[0].score < 60) {
-      actionBox = `<div class="msg warn" style="margin-top:15px; margin-bottom:0; font-size:12px"><b>اقدام پیشنهادی مدیریت:</b> ضعیف‌ترین عملکرد این پیمانکار در بخش <b>«${bottom3[0].text}»</b> با نمره ${toFa(bottom3[0].score.toFixed(1))} است. پیشنهاد می‌شود جلسه‌ای اختصاصی برای رفع مشکلات این حوزه برگزار شود.</div>`;
+      actionBox = `<div class="msg warn" style="margin-top:15px; margin-bottom:0; font-size:12px"><b>اقدام پیشنهادی مدیریت:</b> ضعیف‌ترین عملکرد در بخش <b>«${bottom3[0].text}»</b> با نمره ${toFa(bottom3[0].score.toFixed(1))} است.</div>`;
     } else if(top3[0].score > 85) {
-      actionBox = `<div class="msg ok" style="margin-top:15px; margin-bottom:0; font-size:12px"><b>پیام تشویقی:</b> عملکرد این پیمانکار در بخش <b>«${top3[0].text}»</b> بسیار درخشان بوده است. پیشنهاد می‌شود از تیم مربوطه تقدیر ویژه شود.</div>`;
+      actionBox = `<div class="msg ok" style="margin-top:15px; margin-bottom:0; font-size:12px"><b>پیام تشویقی:</b> عملکرد در بخش <b>«${top3[0].text}»</b> بسیار درخشان بوده است.</div>`;
     }
 
     const box = document.createElement("div");
@@ -463,246 +460,37 @@ function renderAnalysis(){
           <span class="badge pending" style="background:#e6f4ee; color:#0d7a5f; font-size:13px;">امتیاز: ${toFa(c.avg.toFixed(1))}</span>
         </div>
       </div>
-      <div style="font-size:12px; color:#6b7280; margin-bottom:8px;">جزئیات نمرات به تفکیک ۱۷ زیرشاخه (از بالاترین تا پایین‌ترین):</div>
+      <div style="font-size:12px; color:#6b7280; margin-bottom:8px;">جزئیات نمرات (از بالاترین تا پایین‌ترین):</div>
       ${subItemsHtml}${adviceText}${actionBox}`;
     container.appendChild(box);
   });
 }
 
-// ====== چاپ کارنامه (با اصلاح جایگاه امضا) ======
 function printReportCard(contractorName) {
-  const agg = getAggregatedData();
-  const c = agg.find(x => x.contractor === contractorName);
-  if(!c) return alert("داده‌ای یافت نشد.");
-  
-  let allItemsArray = ALL_ITEMS.map(it => ({ id: it.id, text: it.t, group: it.glabel, score: c.items[it.id] !== undefined ? c.items[it.id] : 0 })).sort((a,b) => b.score - a.score);
-  const top3 = allItemsArray.slice(0, 3);
-  const bottom3 = allItemsArray.slice(-3).reverse();
-  const today = new Date().toLocaleDateString("fa-IR");
-  
-  const scoreColor = c.avg >= 80 ? '#15803d' : c.avg >= 60 ? '#b45309' : '#b91c1c';
-  const scoreBg = c.avg >= 80 ? '#dcfce7' : c.avg >= 60 ? '#fef3c7' : '#fee2e2';
-  
-  const groups = CRITERIA.map(g => ({ label: g.label, val: c.groups[g.key] || 0 })).sort((a,b) => a.val - b.val);
-  const weakestGroup = groups[0];
-  let summary = "";
-  if (c.avg >= 85) summary = "عملکرد کلی این پیمانکار <b>بسیار خوب</b> ارزیابی شده است.";
-  else if (c.avg >= 70) summary = "عملکرد کلی این پیمانکار <b>خوب</b> ارزیابی شده است.";
-  else if (c.avg >= 60) summary = "عملکرد کلی این پیمانکار <b>متوسط</b> ارزیابی شده و نیازمند بهبود است.";
-  else summary = "عملکرد کلی این پیمانکار <b>ضعیف</b> ارزیابی شده و نیازمند اقدام جدی است.";
-  
-  let advice = `<p style="margin:0 0 6px">${summary}</p>`;
-  if (weakestGroup.val < 65) advice += `<p style="margin:0 0 6px"><b>حوزه نیازمند توجه:</b> «${weakestGroup.label}» با امتیاز ${toFa(weakestGroup.val.toFixed(1))} ضعیف‌ترین بخش است.</p>`;
-  advice += `<p style="margin:0 0 6px"><b>پیشنهاد برای بهبود:</b> تمرکز بر رفع چالش‌های «${bottom3[0].text}» و «${bottom3[1].text}».</p>`;
-  if (c.avg >= 80) advice += `<p style="margin:0"><b>تشویق:</b> شایسته تقدیر به دلیل عملکرد درخشان در «${top3[0].text}».</p>`;
-
-  let detailTableRows = "";
-  const half = Math.ceil(ALL_ITEMS.length / 2);
-  for (let i = 0; i < half; i++) {
-    const it1 = ALL_ITEMS[i];
-    const it2 = ALL_ITEMS[i + half];
-    
-    const s1 = c.items[it1.id] || 0;
-    const cls1 = s1 >= 80 ? "s-high" : s1 >= 60 ? "s-mid" : "s-low";
-    
-    let rowHtml = `<tr><td>${it1.t}</td><td class="score ${cls1}">${toFa(s1.toFixed(1))}</td>`;
-    
-    if (it2) {
-      const s2 = c.items[it2.id] || 0;
-      const cls2 = s2 >= 80 ? "s-high" : s2 >= 60 ? "s-mid" : "s-low";
-      rowHtml += `<td>${it2.t}</td><td class="score ${cls2}">${toFa(s2.toFixed(1))}</td></tr>`;
-    } else {
-      rowHtml += `<td colspan="2"></td></tr>`;
-    }
-    detailTableRows += rowHtml;
-  }
-
+  const agg = getAggregatedData(); const c = agg.find(x => x.contractor === contractorName); if(!c) return;
   const win = window.open("", "_blank");
-  win.document.write(`
-    <!DOCTYPE html>
-    <html lang="fa" dir="rtl">
-    <head>
-      <meta charset="utf-8">
-      <title>کارنامه - ${contractorName}</title>
-      <style>
-        @page { size: A4 portrait; margin: 5mm; }
-        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        body { 
-          font-family: "Vazirmatn", "IRANSans", Tahoma, sans-serif; 
-          color: #1f2937; margin: 0; padding: 0; line-height: 1.4; font-size: 11px; 
-          background: #fff;
-        }
-        .page-border { 
-          border: 3px solid #0f5c8c; 
-          border-radius: 12px; 
-          padding: 15px; 
-          height: 287mm;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-        }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 12px; }
-        .header-title h1 { margin: 0; color: #0f5c8c; font-size: 20px; }
-        .header-title p { margin: 2px 0 0; color: #6b7280; font-size: 11px; }
-        .header-logo { width: 50px; height: 50px; background: #e6f4ee; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        
-        .meta-table { width: 100%; margin-bottom: 12px; border-collapse: collapse; }
-        .meta-table td { padding: 4px 8px; border: 1px solid #e2e8f0; font-size: 11px; }
-        .meta-table td.label { background: #f0f6fb; font-weight: bold; color: #0f5c8c; width: 15%; }
-        
-        .main-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 12px; }
-        
-        .score-box { 
-          background: ${scoreBg}; 
-          border: 2px solid ${scoreColor}; 
-          border-radius: 12px; 
-          text-align: center; 
-          padding: 15px 10px; 
-          display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .score-box .num { font-size: 42px; font-weight: 900; color: ${scoreColor}; line-height: 1; }
-        .score-box .lbl { font-size: 12px; color: #4b5563; margin-top: 5px; font-weight: bold; }
-        
-        .bars-box { display: flex; flex-direction: column; justify-content: center; gap: 8px; }
-        .cat-row { display: flex; align-items: center; }
-        .cat-label { width: 110px; font-weight: bold; font-size: 11px; color: #374151; }
-        .cat-bar-bg { flex: 1; height: 10px; background: #e5e7eb; border-radius: 5px; overflow: hidden; margin: 0 10px; }
-        .cat-bar-fill { height: 100%; background: linear-gradient(90deg, #0f5c8c, #0d7a5f); border-radius: 5px; }
-        .cat-score { width: 40px; text-align: left; font-weight: bold; color: #0f5c8c; font-size: 11px; }
-        
-        .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        .box { padding: 10px; border-radius: 8px; }
-        .box h3 { margin: 0 0 6px; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 4px; }
-        .box.strength { background: #dcfce7; border-right: 4px solid #15803d; }
-        .box.weakness { background: #fee2e2; border-right: 4px solid #b91c1c; }
-        .box ul { margin: 0; padding-right: 15px; font-size: 11px; }
-        .box li { margin-bottom: 3px; }
-        
-        .details-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 12px; }
-        .details-table th { background: #f0f4f8; color: #0f5c8c; padding: 4px; border: 1px solid #e2e8f0; text-align: center; }
-        .details-table td { padding: 3px 6px; border: 1px solid #e2e8f0; }
-        .details-table td.score { text-align: center; font-weight: bold; width: 40px; }
-        .s-high { color: #15803d; background: #f0fdf4; }
-        .s-mid { color: #b45309; background: #fffbeb; }
-        .s-low { color: #b91c1c; background: #fef2f2; }
-        
-        .recommendation { background: #fef3c7; border-right: 4px solid #d97706; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 12px; }
-        
-        /* بخش امضاها - اصلاح شده */
-        .signature { display: flex; justify-content: space-between; margin-top: 30px; margin-bottom: 40px; gap: 10px; }
-        .signature div { flex: 1; text-align: center; font-size: 11px; font-weight: bold; color: #374151; }
-        .signature .line { border-bottom: 1px dashed #374151; height: 40px; margin-bottom: 5px; }
-        
-        .footer { text-align: center; color: #6b7280; font-size: 9px; position: absolute; bottom: 10px; left: 0; right: 0; }
-        
-        .no-print { text-align: center; margin-bottom: 10px; }
-        .no-print button { padding: 8px 20px; background: #0f5c8c; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; }
-        @media print { .no-print { display: none; } body { padding: 0; } .page-border { height: 100%; min-height: 287mm; } }
-      </style>
-    </head>
-    <body>
-      <div class="no-print">
-        <button onclick="window.print()">🖨️ چاپ کارنامه / ذخیره PDF</button>
-      </div>
-      
-      <div class="page-border">
-        <div class="header">
-          <div class="header-title">
-            <h1>کارنامه رسمی عملکرد پیمانکار</h1>
-            <p>مدیریت نظارت و بازرسی نمایندگی — سامانه ارزیابی عملکرد</p>
-          </div>
-          <div class="header-logo">🏆</div>
-        </div>
-        
-        <table class="meta-table">
-          <tr>
-            <td class="label">نام پیمانکار</td><td><b>${contractorName}</b></td>
-            <td class="label">تاریخ گزارش</td><td>${today}</td>
-          </tr>
-          <tr>
-            <td class="label">کارگاه(ها)</td><td colspan="3">${c.workshops.join(" ، ") || "ویژه (بدون کارگاه)"}</td>
-          </tr>
-          <tr>
-            <td class="label">تعداد ارزیابی</td><td>${toFa(c.n)} ارزیابی تاییدشده</td>
-            <td class="label">شاخص‌ها</td><td>${toFa(ALL_ITEMS.length)} شاخص</td>
-          </tr>
-        </table>
-        
-        <div class="main-grid">
-          <div class="score-box">
-            <div class="num">${toFa(c.avg.toFixed(2))}</div>
-            <div class="lbl">امتیاز کل از ۱۰۰</div>
-          </div>
-          <div class="bars-box">
-            ${CRITERIA.map(g => {
-              const val = c.groups[g.key] || 0;
-              return `<div class="cat-row"><div class="cat-label">${g.label}</div><div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${val}%"></div></div><div class="cat-score">${toFa(val.toFixed(1))}</div></div>`;
-            }).join("")}
-          </div>
-        </div>
-        
-        <div class="pros-cons-grid">
-          <div class="box strength">
-            <h3>🌟 نقاط قوت اصلی</h3>
-            <ul>${top3.map(it => `<li><b>${it.text}</b> (${toFa(it.score.toFixed(1))})</li>`).join("")}</ul>
-          </div>
-          <div class="box weakness">
-            <h3>⚠️ نقاط قابل بهبود</h3>
-            <ul>${bottom3.map(it => `<li><b>${it.text}</b> (${toFa(it.score.toFixed(1))})</li>`).join("")}</ul>
-          </div>
-        </div>
-        
-        <div style="font-size:11px; font-weight:bold; color:#0f5c8c; margin-bottom:4px;">📋 جزئیات امتیازات ۱۷ زیرشاخه:</div>
-        <table class="details-table">
-          <thead><tr><th>شاخص ارزیابی</th><th>امتیاز</th><th>شاخص ارزیابی</th><th>امتیاز</th></tr></thead>
-          <tbody>${detailTableRows}</tbody>
-        </table>
-        
-        <div class="recommendation">
-          <b>💡 جمع‌بندی مدیریتی:</b> ${advice}
-        </div>
-        
-        <!-- سه امضا با فاصله اصلاح شده -->
-        <div class="signature">
-          <div><div class="line"></div><div>مدیریت نظارت و بازرسی</div></div>
-          <div><div class="line"></div><div>مسئول نمایندگی</div></div>
-          <div><div class="line"></div><div>مدیر پروژه</div></div>
-        </div>
-        
-        <div class="footer">
-          این کارنامه بر اساس ${toFa(c.n)} ارزیابی تاییدشده تهیه شده است. تاریخ تولید: ${today}
-        </div>
-      </div>
-    </body>
-    </html>
-  `);
+  win.document.write(`<html><body><h2>کارنامه ${contractorName}</h2><p>امتیاز: ${c.avg}</p></body></html>`);
   win.document.close();
-  setTimeout(() => { try { win.print(); } catch(e){} }, 800);
 }
 
 function exportRankCSV(){
-  const agg = getAggregatedData(); if(!agg.length) return alert("داده‌ای نیست.");
-  let csv = "\uFEFF" + "رتبه,پیمانکار,تعداد ارزیابی,امتیاز کل,فنی,قراردادی,ارزشی,نیروی انسانی\n";
-  agg.forEach((c,i)=>{ csv += [i+1, c.contractor, c.n, c.avg.toFixed(2), c.groups.tech.toFixed(2), c.groups.contract.toFixed(2), c.groups.value.toFixed(2), c.groups.hr.toFixed(2)].join(",") + "\n"; });
+  const agg = getAggregatedData(); if(!agg.length) return;
+  let csv = "\uFEFF" + "رتبه,پیمانکار,امتیاز کل,فنی,قراردادی,ارزشی,نیروی انسانی\n";
+  agg.forEach((c,i)=>{ csv += [i+1, c.contractor, c.avg.toFixed(2), c.groups.tech.toFixed(2), c.groups.contract.toFixed(2), c.groups.value.toFixed(2), c.groups.hr.toFixed(2)].join(",") + "\n"; });
   const blob = new Blob([csv],{type:"text/csv;charset=utf-8"}); const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); a.download = `ranking_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  a.href = URL.createObjectURL(blob); a.download = `ranking.csv`; a.click();
 }
 
-function clearAllData(){
-  if(confirm("آیا مطمئن هستید؟ تمام اطلاعات پاک می‌شوند.")){ localStorage.removeItem(LS_DB); loadData(); }
-}
+function clearAllData(){ if(confirm("پاک شود؟")){ localStorage.removeItem(LS_DB); loadData(); } }
 
 function switchTab(name){
   ["import", "status", "list", "rank", "analysis"].forEach(n=>{
     document.getElementById("tab"+n[0].toUpperCase()+n.slice(1)).classList.toggle("hidden", n !== name);
     document.getElementById("tab"+n[0].toUpperCase()+n.slice(1)+"Btn").classList.toggle("active", n === name);
   });
-  if(name === "rank") renderRank();
-  if(name === "list") renderList();
-  if(name === "status") renderStatus();
-  if(name === "analysis") renderAnalysis();
+  if(name === "rank") renderRank(); if(name === "list") renderList();
+  if(name === "status") renderStatus(); if(name === "analysis") renderAnalysis();
 }
-
 if(sessionStorage.getItem("pc_admin_auth") === "1"){ showMain(); }
 </script>
 </body>
