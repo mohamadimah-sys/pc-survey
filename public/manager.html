@@ -65,7 +65,7 @@
 <div id="screenMain" class="hidden">
   <header class="top">
     <h1>داشبورد مدیر پروژه <span style="font-size:12px;font-weight:400;opacity:.8">— <span class="live-dot"></span>آنلاین</span></h1>
-    <p>آخرین بروزرسانی: <span id="lastUpdate" style="font-weight:bold; color:#fde68a">در حال بارگذاری...</span> — <a href="#" onclick="loadData();return false;" style="color:#fde68a">🔄 بروزرسانی</a> — <a href="#" onclick="logout();return false;" style="color:#fca5a5">🚪 خروج</a></p>
+    <p>آخرین بروزرسانی: <span id="lastUpdate" style="font-weight:bold; color:#fde68a">در حال بارگذاری...</span> — <a href="#" onclick="manualRefresh();return false;" style="color:#fde68a">🔄 بروزرسانی</a> — <a href="#" onclick="logout();return false;" style="color:#fca5a5">🚪 خروج</a></p>
   </header>
 
   <div class="tabs">
@@ -111,6 +111,8 @@
 const MANAGER_PASSWORD = "manager-1404"; 
 let dataCache = [];
 let refreshTimer = null;
+let isFetching = false; // 👈 قفل ضد تداخل
+let knownIds = new Set(); // 👈 حافظه برای جلوگیری از حذف لحظه‌ای وضعیت سبز
 
 const CONFIG = {
   workshops: [
@@ -155,23 +157,30 @@ function logout(){ sessionStorage.removeItem("pc_manager_auth"); location.reload
 function showMain(){ 
   document.getElementById("screenLogin").classList.add("hidden"); 
   document.getElementById("screenMain").classList.remove("hidden"); 
-  populateRankView(); loadData(); startAutoRefresh();
+  populateRankView(); 
+  loadData(); 
+  startAutoRefresh();
 }
 
-// ☁️ دریافت داده از واسط ورسل با ضد کش (Cache Buster)
+// ☁️ دریافت داده از واسط ورسل با قفل ضد تداخل
 async function loadData(){
+  if (isFetching) return; // 👈 اگر درخواست قبلی تمام نشده، درخواست جدید نده
+  isFetching = true;
+
   const errEl = document.getElementById("lastUpdate");
   errEl.textContent = "در حال دریافت...";
   errEl.style.color = "#fde68a";
   
   try {
-    // 👈 اضافه کردن t=Date.now() برای دور زدن کامل کش
     const res = await fetch(`/api/admin?t=${Date.now()}`, { cache: "no-store" });
     if(!res.ok) throw new Error("خطای شبکه");
     
     const rows = await res.json();
     
-    // فیلتر کردن رکوردهای بدون ID برای جلوگیری از خطا
+    const currentIds = rows.filter(r => r && r.id).map(r => r.id);
+    // 👈 اضافه کردن به حافظه (حتی اگر در این لحظه نبودند، وضعیت سبزشون حفظ میشه)
+    currentIds.forEach(id => knownIds.add(id));
+
     dataCache = rows.filter(r => r && r.id).map(r => ({
       id: r.id, evaluatorType: r.evaluator_type, evaluatorCode: r.evaluator_code,
       supervisor: r.supervisor, evaluatorRole: r.evaluator_role, contractor: r.contractor,
@@ -179,8 +188,7 @@ async function loadData(){
       scores: r.scores, groups: r.groups, total: r.total, status: r.status
     }));
 
-    // 👈 نمایش تعداد کل رکوردهای دریافتی برای دیباگ
-    errEl.textContent = `آخرین بروزرسانی: ${new Date().toLocaleTimeString("fa-IR")} | کل رکوردها در دیتابیس: ${toFa(dataCache.length)}`;
+    errEl.textContent = `آخرین بروزرسانی: ${new Date().toLocaleTimeString("fa-IR")} | کل رکوردها در دیتابیس: ${toFa(knownIds.size)}`;
     errEl.style.color = "#a7f3d0";
     
     renderStatus(); renderRank(); renderAnalysis();
@@ -188,9 +196,12 @@ async function loadData(){
     errEl.textContent = "خطا در اتصال: " + e.message;
     errEl.style.color = "#fca5a5";
     console.error(e);
+  } finally {
+    isFetching = false; // 👈 آزاد کردن قفل
   }
 }
 
+function manualRefresh(){ loadData(); }
 function startAutoRefresh(){
   if(refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(()=>{ if(!document.hidden) loadData(); }, 30000);
@@ -209,12 +220,13 @@ function renderStatus(){
     targets.forEach(c => expected.push({ id: `mgr|${m.code}|${c}`, role: m.role, name: m.role, target: c }));
   });
 
-  const idsInDb = new Set(dataCache.map(r => r.id));
   let doneCount = 0;
   const tbody = document.querySelector("#statusTable tbody"); tbody.innerHTML = "";
 
   expected.forEach(item => {
-    const isDone = idsInDb.has(item.id); if(isDone) doneCount++;
+    const isDone = knownIds.has(item.id); // 👈 استفاده از حافظه برای وضعیت
+    if(isDone) doneCount++;
+    
     let statusHtml = isDone ? `<span class="badge approved">✓ دریافت شد</span>` : `<span class="badge missing">✕ نفرستاده</span>`;
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${item.role}</td><td>${item.name}</td><td class="name">${item.target}</td><td>${statusHtml}</td>`;
