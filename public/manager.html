@@ -111,8 +111,13 @@
 const MANAGER_PASSWORD = "manager-1404"; 
 let dataCache = [];
 let refreshTimer = null;
-let isFetching = false; // 👈 قفل ضد تداخل
-let knownIds = new Set(); // 👈 حافظه برای جلوگیری از حذف لحظه‌ای وضعیت سبز
+let isFetching = false;
+
+// 👈 ذخیره حافظه یکتاها در localStorage تا با رفرش صفحه پاک نشود
+let knownIds;
+try {
+  knownIds = new Set(JSON.parse(localStorage.getItem("pc_manager_known_ids") || "[]"));
+} catch(e) { knownIds = new Set(); }
 
 const CONFIG = {
   workshops: [
@@ -162,9 +167,9 @@ function showMain(){
   startAutoRefresh();
 }
 
-// ☁️ دریافت داده از واسط ورسل با قفل ضد تداخل
+// ☁️ دریافت داده با ذخیره‌سازی دائمی حافظه
 async function loadData(){
-  if (isFetching) return; // 👈 اگر درخواست قبلی تمام نشده، درخواست جدید نده
+  if (isFetching) return; 
   isFetching = true;
 
   const errEl = document.getElementById("lastUpdate");
@@ -177,9 +182,15 @@ async function loadData(){
     
     const rows = await res.json();
     
-    const currentIds = rows.filter(r => r && r.id).map(r => r.id);
-    // 👈 اضافه کردن به حافظه (حتی اگر در این لحظه نبودند، وضعیت سبزشون حفظ میشه)
-    currentIds.forEach(id => knownIds.add(id));
+    // اضافه کردن شناسه‌های جدید به حافظه دائمی
+    let newAdded = false;
+    rows.filter(r => r && r.id).forEach(r => {
+      if (!knownIds.has(r.id)) { knownIds.add(r.id); newAdded = true; }
+    });
+    
+    if (newAdded) {
+      localStorage.setItem("pc_manager_known_ids", JSON.stringify([...knownIds]));
+    }
 
     dataCache = rows.filter(r => r && r.id).map(r => ({
       id: r.id, evaluatorType: r.evaluator_type, evaluatorCode: r.evaluator_code,
@@ -188,7 +199,7 @@ async function loadData(){
       scores: r.scores, groups: r.groups, total: r.total, status: r.status
     }));
 
-    errEl.textContent = `آخرین بروزرسانی: ${new Date().toLocaleTimeString("fa-IR")} | کل رکوردها در دیتابیس: ${toFa(knownIds.size)}`;
+    errEl.textContent = `آخرین بروزرسانی: ${new Date().toLocaleTimeString("fa-IR")} | رکوردهای یکتا: ${toFa(knownIds.size)}`;
     errEl.style.color = "#a7f3d0";
     
     renderStatus(); renderRank(); renderAnalysis();
@@ -197,7 +208,7 @@ async function loadData(){
     errEl.style.color = "#fca5a5";
     console.error(e);
   } finally {
-    isFetching = false; // 👈 آزاد کردن قفل
+    isFetching = false; 
   }
 }
 
@@ -224,7 +235,7 @@ function renderStatus(){
   const tbody = document.querySelector("#statusTable tbody"); tbody.innerHTML = "";
 
   expected.forEach(item => {
-    const isDone = knownIds.has(item.id); // 👈 استفاده از حافظه برای وضعیت
+    const isDone = knownIds.has(item.id); 
     if(isDone) doneCount++;
     
     let statusHtml = isDone ? `<span class="badge approved">✓ دریافت شد</span>` : `<span class="badge missing">✕ نفرستاده</span>`;
