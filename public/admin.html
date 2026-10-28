@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>پنل مدیریت (آفلاین) — رتبه‌بندی پیمانکاران</title>
+<title>پنل مدیریت (آفلاین) — رتبه‌بندی و تحلیل</title>
 <style>
   :root{--bg:#f4f6f9;--card:#fff;--ink:#1f2937;--muted:#6b7280;--brand:#0f5c8c;--brand2:#0d7a5f;--line:#e2e8f0}
   *{box-sizing:border-box}
@@ -12,7 +12,7 @@
   header.top h1{margin:0;font-size:17px}
   header.top p{margin:4px 0 0;font-size:12px;opacity:.9}
   .tabs{display:flex;gap:8px;padding:10px 14px 0;max-width:1200px;margin:0 auto;flex-wrap:wrap}
-  .tabs button{flex:1;min-width:150px;padding:10px;border:1px solid var(--line);background:#fff;border-radius:10px 10px 0 0;cursor:pointer;font-family:inherit;font-size:13.5px}
+  .tabs button{flex:1;min-width:120px;padding:10px;border:1px solid var(--line);background:#fff;border-radius:10px 10px 0 0;cursor:pointer;font-family:inherit;font-size:13px}
   .tabs button.active{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:700}
   main{max-width:1200px;margin:0 auto;padding:14px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
@@ -24,14 +24,14 @@
   .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
   .field textarea,.field input{padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;background:#fbfcfe;width:100%}
   .field textarea{min-height:100px;direction:ltr;text-align:left;font-family:monospace;font-size:12px}
-  .btn{background:var(--brand);color:#fff;border:none;padding:10px 18px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:700;margin:2px}
+  .btn{background:var(--brand);color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;margin:2px}
   .btn.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand);font-weight:400}
   .btn.ok{background:#0d7a5f}
   .btn.danger{background:#dc2626}
+  .btn.warn{background:#d97706;color:#fff}
   .msg{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:10px}
   .msg.ok{background:#e6f4ee;color:#0a5c46;border:1px solid #b7e4d3}
   .msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-  .msg.warn{background:#fffbeb;color:#7c4a03;border:1px solid #fde68a}
   .hidden{display:none}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle}
@@ -42,18 +42,35 @@
   .badge.pending{background:#fef3c7;color:#92400e}
   .badge.approved{background:#d1fae5;color:#065f46}
   .badge.rejected{background:#fee2e2;color:#991b1b}
+  .badge.missing{background:#fee2e2;color:#991b1b}
   .rank-num{display:inline-block;min-width:26px;padding:1px 7px;border-radius:20px;background:#e6f4ee;color:var(--brand2);font-weight:700;font-size:12px}
   .rank-num.gold{background:#fde68a;color:#7c4a03}
   tr.rank1 td{background:#fffbe6}
   .hint{font-size:12px;color:var(--muted);margin-top:5px}
-  .detail{background:#f8fafc;font-size:12px}
-  .detail td{text-align:right}
   .tag{display:inline-block;padding:1px 8px;border-radius:12px;font-size:11px;background:#e6f4ee;color:var(--brand2);margin:1px}
   .tag.mgr{background:#fef3c7;color:#92400e}
   .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
   .filters select{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;min-width:200px}
   .login-box{max-width:380px;margin:60px auto;padding:24px;background:#fff;border:1px solid var(--line);border-radius:16px;text-align:center}
   .login-box input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px;font-family:inherit;font-size:15px;text-align:center;letter-spacing:3px}
+  
+  /* استایل‌های تحلیل عمیق */
+  .analysis-box{background:#fff;border-radius:12px;padding:15px;margin-bottom:15px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+  .progress-bar-bg{background:#e2e8f0;height:6px;border-radius:10px;overflow:hidden;margin-top:4px}
+  .progress-bar-fill{height:100%;border-radius:10px}
+  .proj-stat-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;margin-bottom:20px}
+  .proj-stat{background:#f0f6fb;border:1px solid #d0e2f1;padding:12px;border-radius:12px;text-align:center}
+  .proj-stat b{display:block;font-size:22px;color:var(--brand);margin-bottom:4px}
+  
+  /* استایل جدول زیرشاخه‌ها */
+  .sub-items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  @media(max-width:700px){ .sub-items-grid { grid-template-columns: 1fr; } }
+  .sub-item-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #eef2f7; }
+  .sub-item-title { font-size: 12.5px; color: #374151; }
+  .sub-item-score { font-size: 13px; font-weight: bold; padding: 2px 8px; border-radius: 6px; min-width: 45px; text-align: center; }
+  .score-high { background: #dcfce7; color: #15803d; }
+  .score-mid { background: #fef3c7; color: #b45309; }
+  .score-low { background: #fee2e2; color: #b91c1c; }
 </style>
 </head>
 <body>
@@ -73,9 +90,11 @@
   </header>
 
   <div class="tabs">
-    <button id="tabImportBtn" class="active" onclick="switchTab('import')">📥 دریافت داده‌ها</button>
+    <button id="tabImportBtn" class="active" onclick="switchTab('import')">📥 دریافت</button>
+    <button id="tabStatusBtn" onclick="switchTab('status')">📊 وضعیت ارسال‌ها</button>
     <button id="tabListBtn" onclick="switchTab('list')">📋 ارزیابی‌ها</button>
     <button id="tabRankBtn" onclick="switchTab('rank')">🏆 رتبه‌بندی</button>
+    <button id="tabAnalysisBtn" onclick="switchTab('analysis')">📈 تحلیل عمیق</button>
   </div>
 
   <main>
@@ -87,7 +106,7 @@
         <div class="grid2">
           <div>
             <div class="field">
-              <label>بارگذاری فایل‌های JSON (چند فایل مجاز است)</label>
+              <label>بارگذاری فایل‌های JSON</label>
               <input type="file" id="fileInput" accept=".json" multiple>
             </div>
           </div>
@@ -99,7 +118,20 @@
             <button class="btn ghost" onclick="importPaste()">افزودن از متن</button>
           </div>
         </div>
-        <div class="hint">هر فایل به‌صورت خودکار اعتبارسنجی هش می‌شود. رکوردهای تکراری پذیرفته نمی‌شوند.</div>
+        <div class="hint">فایل‌های تکراری و دست‌کاری‌شده به طور خودکار رد می‌شوند.</div>
+      </div>
+    </section>
+
+    <section id="tabStatus" class="hidden">
+      <div class="card">
+        <h2>وضعیت دریافت فرم‌ها <span class="w" id="statusProgress">۰ / ۰</span></h2>
+        <div class="hint" style="margin-bottom:15px">این جدول بر اساس چارت سازمانی پروژه ساخته شده است. اگر کسی فرمی نفرستاده باشد، با رنگ قرمز مشخص می‌شود.</div>
+        <div class="scroll">
+          <table id="statusTable">
+            <thead><tr><th>نقش</th><th>نام ارزیاب</th><th>پیمانکار هدف</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -114,20 +146,10 @@
             <option value="approved">تاییدشده</option>
             <option value="rejected">رد‌شده</option>
           </select>
-          <select id="filterType" onchange="renderList()">
-            <option value="all">همه ارزیابان</option>
-            <option value="supervisor">رؤسای کارگاه</option>
-            <option value="manager">مدیران پروژه</option>
-          </select>
         </div>
         <div class="scroll">
           <table id="subsTable">
-            <thead>
-              <tr>
-                <th>ارزیاب</th><th>نوع</th><th>کارگاه</th><th>پیمانکار</th>
-                <th>تاریخ</th><th>امتیاز</th><th>وضعیت</th><th>عملیات</th>
-              </tr>
-            </thead>
+            <thead><tr><th>ارزیاب</th><th>نوع</th><th>کارگاه</th><th>پیمانکار</th><th>تاریخ</th><th>امتیاز</th><th>وضعیت</th><th>عملیات</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -142,29 +164,29 @@
           <select id="rankView" onchange="renderRank()">
             <option value="ALL">🏆 کل پروژه</option>
           </select>
-          <label>فیلتر ارزیاب:</label>
-          <select id="rankSource" onchange="renderRank()">
-            <option value="all">همه (رؤسا + مدیران)</option>
-            <option value="sup">فقط رؤسای کارگاه</option>
-            <option value="mgr">فقط مدیران پروژه</option>
-          </select>
         </div>
         <div class="scroll">
           <table id="rankTable">
-            <thead>
-              <tr>
-                <th>رتبه</th><th>پیمانکار</th><th>کارگاه(ها)</th><th>تعداد ارزیابی</th>
-                <th>امتیاز کل</th><th>فنی ۳۰٪</th><th>قراردادی ۲۰٪</th>
-                <th>ارزشی ۲۰٪</th><th>نیروی انسانی ۳۰٪</th>
-              </tr>
-            </thead>
+            <thead><tr><th>رتبه</th><th>پیمانکار</th><th>کارگاه(ها)</th><th>تعداد ارزیابی</th><th>امتیاز کل</th><th>فنی</th><th>قراردادی</th><th>ارزشی</th><th>نیروی انسانی</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
         <div style="margin-top:14px">
           <button class="btn ghost" onclick="exportRankCSV()">⬇️ خروجی CSV</button>
-          <button class="btn danger" onclick="clearAllData()" style="float:left">🗑️ پاک کردن همه داده‌ها</button>
+          <button class="btn danger" onclick="clearAllData()" style="float:left">🗑️ پاک کردن داده‌ها</button>
         </div>
+      </div>
+    </section>
+
+    <section id="tabAnalysis" class="hidden">
+      <div class="card">
+        <h2>تحلیل کلی پروژه</h2>
+        <div class="proj-stat-grid" id="projStats"></div>
+      </div>
+      
+      <div class="card">
+        <h2>تحلیل عملکرد پیمانکاران (بر اساس ۱۷ زیرشاخه)</h2>
+        <div id="analysisContainer"></div>
       </div>
     </section>
   </main>
@@ -172,39 +194,64 @@
 
 <script>
 const ADMIN_PASSWORD = "admin-1404"; 
-const LS_DB = "pc_admin_db_v3"; // ذخیره‌سازی محلی
+const LS_DB = "pc_admin_db_v3";
 
-const ADMIN_CONFIG = {
-  salt: "pc-eval-v2-2025-immutable",
+const CONFIG = {
   workshops: [
-    { code:"W2",  name:"دانش" }, { code:"W3",  name:"شهدا" },
-    { code:"W4",  name:"باب الجواد" }, { code:"W5",  name:"فردوسی" },
-    { code:"W6",  name:"ابوذر" }, { code:"W7",  name:"بسیج" },
-    { code:"W8",  name:"شارستان" }, { code:"W9",  name:"لینک سه راهی" },
-    { code:"W10", name:"میان تونلی" }
+    { code:"W2",  name:"دانش", supervisor:"مهندس یاقوتی", contractors:["جلال حیدری زاده","مجتبی مراد زاده قله زو","ابوالفضل عابدیان خور","جعفر آقا بیگی", "پیمانکاری ظریف", "فتاح احمدی بابادی"] },
+    { code:"W3",  name:"شهدا", supervisor:"مهندس آخوند زاده", contractors:["یاسر باقری قلعه جوق","سید محمد ثمره موسوی","نیک سازان برق مشهد","پیمانکاری راه مرد","توسعه اقتصادی فرزام"] },
+    { code:"W4",  name:"باب الجواد", supervisor:"مهندس علیدوست", contractors:["حسن خوش اندام"] },
+    { code:"W5",  name:"فردوسی", supervisor:"مهندس خوش طبخ", contractors:["رادین راه پیمان"], extraContractors:["محمود بیرجندی"] },
+    { code:"W6",  name:"ابوذر", supervisor:"مهندس فیروزی", contractors:["حسن خوش اندام"] },
+    { code:"W7",  name:"بسیج", supervisor:"مهندس منتظریان", contractors:["شرکت گروه مهندسی سورنا سازه آریو","نیک سازان برق مشهد"] },
+    { code:"W8",  name:"شارستان", supervisor:"مهندس فلاح", contractors:["پیمانکاری راه مرد"] },
+    { code:"W9",  name:"لینک سه راهی", supervisor:"مهندس فیروزی", contractors:["شرکت گروه مهندسی سورنا سازه آریو"] },
+    { code:"W10", name:"میان تونلی", supervisor:"مهندس کاشف", contractors:["توسعه اقتصادی فرزام"] }
+  ],
+  specialContractors: ["محمود بیرجندی", "داناب تهویه پارس گستر", "احمد یزدی", "تعاونی هشتصد و نود و پنج"],
+  managers: [
+    { code:"PM", role:"مدیر پروژه", assignedContractors: null },
+    { code:"CM", role:"مدیر قراردادهای پروژه", assignedContractors: null },
+    { code:"SM", role:"مدیر ساخت پروژه", assignedContractors: null, excludedContractors: ["تعاونی هشتصد و نود و پنج"] },
+    { code:"SPM", role:"مدیر پشتیبانی پروژه", assignedContractors: ["تعاونی هشتصد و نود و پنج", "محمود بیرجندی", "داناب تهویه پارس گستر"] },
+    { code:"PMO", role:"دفتر مدیریت پروژه", assignedContractors: ["تعاونی هشتصد و نود و پنج"] },
+    { code:"TM", role:"مدیر فنی پروژه", assignedContractors: null }
   ]
 };
 
+// 👇 حالا متن دقیق سوالات هم اضافه شده است
 const CRITERIA = [
-  { key:"tech", items:[{id:"t1",w:12},{id:"t2",w:8},{id:"t3",w:5},{id:"t4",w:5}]},
-  { key:"contract", items:[{id:"c1",w:8},{id:"c2",w:6},{id:"c3",w:6}]},
-  { key:"value", items:[{id:"v1",w:6},{id:"v2",w:4},{id:"v3",w:4},{id:"v4",w:4},{id:"v5",w:2}]},
-  { key:"hr", items:[{id:"h1",w:12},{id:"h2",w:8},{id:"h3",w:5},{id:"h4",w:5}]}
+  { key:"tech", label:"فنی و اجرایی", items:[
+    {id:"t1",w:12, t:"کیفیت اجرا و انطباق فنی"}, 
+    {id:"t2",w:8, t:"برنامه‌ریزی و کنترل زمان"},
+    {id:"t3",w:5, t:"تجهیزات و ماشین‌آلات"}, 
+    {id:"t4",w:5, t:"ایمنی، بهداشت و محیط زیست (HSE)"}
+  ]},
+  { key:"contract", label:"قراردادی و مدیریتی", items:[
+    {id:"c1",w:8, t:"تعامل و پاسخگویی با کارفرما و ناظر"}, 
+    {id:"c2",w:6, t:"مدیریت اداری و مستندسازی"},
+    {id:"c3",w:6, t:"حسن سابقه و اعتبار"}
+  ]},
+  { key:"value", label:"اخلاقی، اعتقادی و سیاسی", items:[
+    {id:"v1",w:6, t:"پایبندی به ارزش‌های اخلاقی و اعتقادی"}, 
+    {id:"v2",w:4, t:"رفتار سیاسی مسئولانه"},
+    {id:"v3",w:4, t:"صداقت، شفافیت و سلامت اداری"}, 
+    {id:"v4",w:4, t:"کرامت، عدالت و عدم تبعیض"}, 
+    {id:"v5",w:2, t:"فرهنگ سازمانی"}
+  ]},
+  { key:"hr", label:"نیروی انسانی", items:[
+    {id:"h1",w:12, t:"پرداخت به‌موقع حقوق"}, 
+    {id:"h2",w:8, t:"بیمه و تأمین اجتماعی"},
+    {id:"h3",w:5, t:"رفاه، ایمنی روانی و شرایط کار"}, 
+    {id:"h4",w:5, t:"آموزش و توانمندسازی"}
+  ]}
 ];
-const ALL_ITEMS = CRITERIA.flatMap(g=>g.items.map(i=>({...i,gkey:g.key})));
+const ALL_ITEMS = CRITERIA.flatMap(g=>g.items.map(i=>({...i, gkey:g.key, glabel:g.label})));
 
 let dataCache = [];
-let refreshTimer = null;
 
 function toFa(n){ return String(n).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[d]); }
 function esc(s){ return String(s).replace(/'/g,"\\'"); }
-function simpleHash(str){
-  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-  for(let i=0;i<str.length;i++){ const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
-  h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
-  return (h2>>>0).toString(16).padStart(8,"0") + (h1>>>0).toString(16).padStart(8,"0");
-}
 
 function getDb(){
   const d = JSON.parse(localStorage.getItem(LS_DB) || "null");
@@ -214,19 +261,11 @@ function saveDb(d){ localStorage.setItem(LS_DB, JSON.stringify(d)); }
 
 function tryUnlock(){
   const v = document.getElementById("pwdInput").value.trim();
-  if(v !== ADMIN_PASSWORD){
-    const e = document.getElementById("pwdError");
-    e.textContent = "❌ رمز عبور اشتباه است.";
-    e.classList.remove("hidden");
-    return;
-  }
+  if(v !== ADMIN_PASSWORD){ document.getElementById("pwdError").classList.remove("hidden"); return; }
   sessionStorage.setItem("pc_admin_auth", "1");
   showMain();
 }
-function logout(){
-  sessionStorage.removeItem("pc_admin_auth");
-  location.reload();
-}
+function logout(){ sessionStorage.removeItem("pc_admin_auth"); location.reload(); }
 function showMain(){
   document.getElementById("screenLogin").classList.add("hidden");
   document.getElementById("screenMain").classList.remove("hidden");
@@ -234,7 +273,6 @@ function showMain(){
   loadData();
 }
 
-// ====== عملیات آپلود فایل ======
 document.getElementById("fileInput").addEventListener("change", async e=>{
   const files = [...e.target.files];
   let ok=0, dup=0, bad=0;
@@ -245,9 +283,7 @@ document.getElementById("fileInput").addEventListener("change", async e=>{
       const arr = Array.isArray(parsed) ? parsed : [parsed];
       arr.forEach(r=>{
         const res = importRecord(r);
-        if(res === "ok") ok++;
-        else if(res === "dup") dup++;
-        else bad++;
+        if(res === "ok") ok++; else if(res === "dup") dup++; else bad++;
       });
     }catch(err){ bad++; }
   }
@@ -279,8 +315,7 @@ function importRecord(r){
 function loadData(){
   const db = getDb();
   dataCache = Object.values(db.records).map(e => ({...e.record, status: e.status, note: e.note}));
-  renderList();
-  renderRank();
+  renderStatus(); renderList(); renderRank(); renderAnalysis();
 }
 
 function showMsg(type, text){
@@ -289,39 +324,53 @@ function showMsg(type, text){
   setTimeout(()=>{ box.innerHTML = ""; }, 6000);
 }
 
-// ====== تایید / رد ======
 function updateRow(id, patch){
-  const db = getDb();
-  if(!db.records[id]) return;
+  const db = getDb(); if(!db.records[id]) return;
   db.records[id].status = patch.status;
   if(patch.note) db.records[id].note = patch.note;
-  saveDb(db);
-  loadData();
+  saveDb(db); loadData();
 }
 
 function approve(id){ if(!confirm("تایید شود؟")) return; updateRow(id, { status: "approved" }); showMsg("ok", "✓ تایید شد"); }
 function reject(id){ const reason = prompt("دلیل رد:"); if(reason === null) return; updateRow(id, { status: "rejected", note: reason }); showMsg("ok", "✓ رد شد"); }
 function reopen(id){ const typed = prompt("برای بازگشایی، عبارت «لغو» را تایپ کنید:"); if(typed !== "لغو") return alert("عبارت اشتباه."); updateRow(id, { status: "pending", note: null }); showMsg("ok", "✓ بازگشایی شد"); }
 
-function makeUnlockCode(recordId) {
-  const secret = "ADMIN-UNLOCK-KEY-2025";
-  return simpleHash(secret + "|" + recordId).slice(0, 8).toUpperCase();
-}
-function showUnlockCode(recordId, info) {
-  const code = makeUnlockCode(recordId);
-  prompt(`🔑 کد بازگشایی برای:\n${info}\n\nکد را کپی کرده و به ارزیاب بدهید:`, code);
+function renderStatus(){
+  let expected = [];
+  CONFIG.workshops.forEach(w => {
+    w.contractors.forEach(c => expected.push({ id: `sup|${w.code}|${c}`, role: "رئیس کارگاه", name: w.supervisor, target: c }));
+    if(w.extraContractors) w.extraContractors.forEach(c => expected.push({ id: `sup|${w.code}|${c}`, role: "رئیس کارگاه", name: w.supervisor, target: c }));
+  });
+  const allC = [...new Set([...CONFIG.workshops.flatMap(w=>w.contractors), ...CONFIG.specialContractors])];
+  CONFIG.managers.forEach(m => {
+    let targets = m.assignedContractors || allC;
+    if(m.excludedContractors) targets = targets.filter(c => !m.excludedContractors.includes(c));
+    targets.forEach(c => expected.push({ id: `mgr|${m.code}|${c}`, role: m.role, name: m.role, target: c }));
+  });
+
+  const db = getDb();
+  let doneCount = 0;
+  const tbody = document.querySelector("#statusTable tbody"); tbody.innerHTML = "";
+
+  expected.forEach(item => {
+    const isDone = !!db.records[item.id];
+    if(isDone) doneCount++;
+    let ops = "-";
+    let statusHtml = isDone ? `<span class="badge approved">✓ دریافت شد</span>` : `<span class="badge missing">✕ نفرستاده</span>`;
+    if(!isDone){
+      const msg = `جناب آقای ${item.name}، احتراماً، فرم ارزیابی پیمانکار «${item.target}» هنوز دریافت نشده است. لطفاً نسبت به تکمیل فرم از طریق لینک اختصاصی خود اقدام فرمایید. با تشکر - مدیریت نظارت و بازرسی`;
+      ops = `<button class="btn warn" onclick="navigator.clipboard.writeText('${msg}'); alert('متن یادآوری کپی شد!');">کپی متن یادآوری</button>`;
+    }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${item.role}</td><td>${item.name}</td><td class="name">${item.target}</td><td>${statusHtml}</td><td>${ops}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById("statusProgress").textContent = `${toFa(doneCount)} / ${toFa(expected.length)}`;
 }
 
-// ====== رندرها ======
 function renderList(){
   const fS = document.getElementById("filterStatus").value;
-  const fT = document.getElementById("filterType").value;
-  let list = dataCache.filter(r=>{
-    if(fS !== "all" && r.status !== fS) return false;
-    if(fT !== "all" && r.evaluator_type !== fT) return false;
-    return true;
-  }).sort((a,b)=> b.timestamp.localeCompare(a.timestamp));
-  
+  let list = dataCache.filter(r=> fS === "all" || r.status === fS).sort((a,b)=> b.timestamp.localeCompare(a.timestamp));
   document.getElementById("subsCount").textContent = toFa(dataCache.length);
   const tbody = document.querySelector("#subsTable tbody"); tbody.innerHTML = "";
   if(!list.length){ tbody.innerHTML = `<tr><td colspan="8" style="padding:18px;color:#6b7280">داده‌ای یافت نشد.</td></tr>`; return; }
@@ -330,15 +379,9 @@ function renderList(){
     const badgeCls = r.status === "approved" ? "approved" : r.status === "rejected" ? "rejected" : "pending";
     const badgeTxt = r.status === "approved" ? "✓ تایید" : r.status === "rejected" ? "✕ رد" : "⏳ انتظار";
     const typeBadge = r.evaluator_type === "manager" ? `<span class="tag mgr">مدیر</span>` : `<span class="tag">رئیس</span>`;
-    
-    let ops = "";
-    if(r.status === "pending"){
-      ops = `<button class="btn ok" onclick="approve('${esc(r.id)}')">✓</button> <button class="btn danger" onclick="reject('${esc(r.id)}')">✕</button>`;
-    } else {
-      ops = `<button class="btn ghost" onclick="reopen('${esc(r.id)}')">بازگشایی</button>`;
-    }
-    const unlockBtn = `<button class="btn ghost" style="color:#92400e;border-color:#fcd34d" onclick="showUnlockCode('${esc(r.id)}', '${esc(r.supervisor)} → ${esc(r.contractor)}')">🔑</button>`;
-    ops = unlockBtn + " " + ops;
+    let ops = r.status === "pending" 
+      ? `<button class="btn ok" onclick="approve('${esc(r.id)}')">✓</button> <button class="btn danger" onclick="reject('${esc(r.id)}')">✕</button>`
+      : `<button class="btn ghost" onclick="reopen('${esc(r.id)}')">بازگشایی</button>`;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${r.supervisor}</td><td>${typeBadge}</td><td>${r.workshopName || "—"}</td>
@@ -346,50 +389,29 @@ function renderList(){
       <td><b>${toFa(Number(r.total).toFixed(1))}</b></td>
       <td><span class="badge ${badgeCls}">${badgeTxt}</span>${r.note?`<div class="hint">${r.note}</div>`:""}</td><td>${ops}</td>`;
     tbody.appendChild(tr);
-
-    const det = document.createElement("tr"); det.className = "detail hidden";
-    let h = `<td colspan="8"><table style="font-size:12px">`;
-    ALL_ITEMS.forEach(it=>{ h += `<tr><td style="text-align:right">${it.id}</td><td><b>${toFa(r.scores[it.id] ?? "-")}</b></td><td style="color:#6b7280">${toFa(it.w)}٪</td></tr>`; });
-    h += `</table></td>`; det.innerHTML = h;
-    tr.querySelector(".name").addEventListener("click", ()=> det.classList.toggle("hidden"));
-    tbody.appendChild(det);
   });
 }
 
 function populateRankView(){
   const sel = document.getElementById("rankView");
   if(sel.options.length > 1) return;
-  ADMIN_CONFIG.workshops.forEach(w=>{ const o = document.createElement("option"); o.value = w.code; o.textContent = "🏗️ " + w.name; sel.appendChild(o); });
+  CONFIG.workshops.forEach(w=>{ const o = document.createElement("option"); o.value = w.code; o.textContent = "🏗️ " + w.name; sel.appendChild(o); });
 }
 
-function aggregate(){
+function getAggregatedData(){
   const approved = dataCache.filter(r=> r.status === "approved");
-  const view = document.getElementById("rankView").value;
-  const src = document.getElementById("rankSource").value;
-  let filtered = approved;
-  if(view !== "ALL"){
-    filtered = approved.filter(r=>{ if(r.evaluator_type === "supervisor" && r.workshopCode === view) return true; return false; });
-    if(!filtered.length){
-      const inWs = new Set(); approved.forEach(r=>{ if(r.workshopCode === view) inWs.add(r.contractor); });
-      filtered = approved.filter(r=> r.evaluator_type === "manager" && inWs.has(r.contractor));
-    }
-  }
-  if(src === "sup") filtered = filtered.filter(r=> r.evaluator_type === "supervisor");
-  if(src === "mgr") filtered = filtered.filter(r=> r.evaluator_type === "manager");
-
   const map = {};
-  filtered.forEach(r=>{
-    if(!map[r.contractor]){ map[r.contractor] = { contractor:r.contractor, n:0, nSup:0, nMgr:0, total:0, groups:{tech:0,contract:0,value:0,hr:0}, items:{}, workshops:new Set() }; }
+  approved.forEach(r=>{
+    if(!map[r.contractor]){ map[r.contractor] = { contractor:r.contractor, n:0, total:0, groups:{tech:0,contract:0,value:0,hr:0}, items:{}, workshops:new Set() }; }
     const m = map[r.contractor];
-    m.n++; if(r.evaluator_type === "supervisor") m.nSup++; else m.nMgr++;
-    m.total += Number(r.total);
+    m.n++; m.total += Number(r.total);
     CRITERIA.forEach(g=>{ m.groups[g.key] += Number(r.groups[g.key] || 0); });
-    ALL_ITEMS.forEach(it=>{ m.items[it.id] = (m.items[it.id] || 0) + Number(r.scores[it.id] || 0); });
-    if(r.workshopCode){ const w = ADMIN_CONFIG.workshops.find(x=>x.code===r.workshopCode); if(w) m.workshops.add(w.name); }
+    ALL_ITEMS.forEach(it => { m.items[it.id] = (m.items[it.id] || 0) + Number(r.scores[it.id] || 0); });
+    if(r.workshopCode){ const w = CONFIG.workshops.find(x=>x.code===r.workshopCode); if(w) m.workshops.add(w.name); }
   });
 
   return Object.values(map).map(m=>({
-    contractor: m.contractor, n: m.n, nSup: m.nSup, nMgr: m.nMgr, avg: m.total / m.n,
+    contractor: m.contractor, n: m.n, avg: m.total / m.n,
     groups: Object.fromEntries(Object.entries(m.groups).map(([k,v])=>[k, v/m.n])),
     items: Object.fromEntries(Object.entries(m.items).map(([k,v])=>[k, v/m.n])),
     workshops: [...m.workshops]
@@ -398,36 +420,119 @@ function aggregate(){
 
 function renderRank(){
   const tbody = document.querySelector("#rankTable tbody"); tbody.innerHTML = "";
-  const agg = aggregate();
-  if(!agg.length){ tbody.innerHTML = `<tr><td colspan="9" style="padding:18px;color:#6b7280">ارزیابی تاییدشده‌ای برای این نمای وجود ندارد.</td></tr>`; return; }
+  const agg = getAggregatedData();
+  if(!agg.length){ tbody.innerHTML = `<tr><td colspan="9" style="padding:18px;color:#6b7280">ارزیابی تاییدشده‌ای وجود ندارد.</td></tr>`; return; }
 
   agg.forEach((c, idx)=>{
     const tr = document.createElement("tr"); if(idx === 0) tr.className = "rank1";
     const wsTxt = c.workshops.length ? c.workshops.map(w=>`<span class="tag">${w}</span>`).join(" ") : "—";
     tr.innerHTML = `
       <td><span class="rank-num ${idx===0?'gold':''}">${toFa(idx+1)}</span></td><td class="name">${c.contractor}</td>
-      <td style="font-size:11.5px">${wsTxt}</td><td>${toFa(c.n)} <span class="hint">(${toFa(c.nSup)} رئیس / ${toFa(c.nMgr)} مدیر)</span></td>
-      <td><b>${toFa(c.avg.toFixed(1))}</b></td><td>${toFa((c.groups.tech||0).toFixed(1))}</td>
-      <td>${toFa((c.groups.contract||0).toFixed(1))}</td><td>${toFa((c.groups.value||0).toFixed(1))}</td><td>${toFa((c.groups.hr||0).toFixed(1))}</td>`;
+      <td style="font-size:11.5px">${wsTxt}</td><td>${toFa(c.n)}</td>
+      <td><b>${toFa(c.avg.toFixed(1))}</b></td>
+      <td>${toFa((c.groups.tech||0).toFixed(1))}</td><td>${toFa((c.groups.contract||0).toFixed(1))}</td>
+      <td>${toFa((c.groups.value||0).toFixed(1))}</td><td>${toFa((c.groups.hr||0).toFixed(1))}</td>`;
     tbody.appendChild(tr);
+  });
+}
 
-    const det = document.createElement("tr"); det.className = "detail hidden";
-    let h = `<td colspan="9"><table style="font-size:12px">`;
-    ALL_ITEMS.forEach(it=>{ h += `<tr><td style="text-align:right">${it.id}</td><td style="width:60px"><b>${toFa((c.items[it.id]||0).toFixed(1))}</b></td><td style="width:50px;color:#6b7280">${toFa(it.w)}٪</td></tr>`; });
-    h += `</table></td>`; det.innerHTML = h;
-    tr.querySelector(".name").addEventListener("click", ()=> det.classList.toggle("hidden"));
-    tbody.appendChild(det);
+// ====== تحلیل عمیق (بر اساس ۱۷ زیرشاخه) ======
+function renderAnalysis(){
+  const agg = getAggregatedData();
+  const projStats = document.getElementById("projStats");
+  const container = document.getElementById("analysisContainer");
+  
+  if(!agg.length) { 
+    projStats.innerHTML = "<div style='color:#6b7280'>داده‌ای برای تحلیل وجود ندارد.</div>"; 
+    container.innerHTML = ""; 
+    return; 
+  }
+  
+  // 1. آمار کلی پروژه
+  let projAvg = { tech:0, contract:0, value:0, hr:0, total:0 };
+  agg.forEach(c => {
+    projAvg.tech += c.groups.tech; projAvg.contract += c.groups.contract;
+    projAvg.value += c.groups.value; projAvg.hr += c.groups.hr;
+    projAvg.total += c.avg;
+  });
+  const N = agg.length;
+  projStats.innerHTML = `
+    <div class="proj-stat"><b>${toFa((projAvg.total/N).toFixed(1))}</b>میانگین کل</div>
+    <div class="proj-stat" style="background:#e0f2fe; border-color:#bae6fd"><b>${toFa((projAvg.tech/N).toFixed(1))}</b>فنی</div>
+    <div class="proj-stat" style="background:#fce7f3; border-color:#fbcfe8"><b>${toFa((projAvg.contract/N).toFixed(1))}</b>قراردادی</div>
+    <div class="proj-stat" style="background:#fef3c7; border-color:#fde68a"><b>${toFa((projAvg.value/N).toFixed(1))}</b>ارزشی</div>
+    <div class="proj-stat" style="background:#dcfce7; border-color:#bbf7d0"><b>${toFa((projAvg.hr/N).toFixed(1))}</b>نیروی انسانی</div>
+  `;
+
+  // 2. تحلیل تک تک پیمانکاران
+  container.innerHTML = "";
+  
+  agg.forEach(c => {
+    // استخراج تمام ۱۷ آیتم و مرتب‌سازی بر اساس نمره
+    let allItemsArray = ALL_ITEMS.map(it => {
+      return { 
+        id: it.id, 
+        text: it.t, 
+        group: it.glabel,
+        score: c.items[it.id] !== undefined ? c.items[it.id] : 0 
+      };
+    }).sort((a,b) => b.score - a.score);
+
+    const top3 = allItemsArray.slice(0, 3);
+    const bottom3 = allItemsArray.slice(-3).reverse(); // ضعیف‌ترین‌ها
+
+    // ساخت جدول ۱۷ زیرشاخه
+    let subItemsHtml = `<div class="sub-items-grid">`;
+    allItemsArray.forEach(it => {
+      let scoreClass = it.score >= 80 ? "score-high" : (it.score >= 60 ? "score-mid" : "score-low");
+      subItemsHtml += `
+        <div class="sub-item-row">
+          <span class="sub-item-title">${it.text}</span>
+          <span class="sub-item-score ${scoreClass}">${toFa(it.score.toFixed(1))}</span>
+        </div>
+      `;
+    });
+    subItemsHtml += `</div>`;
+
+    // متن تحلیل
+    let adviceText = `<div style="font-size:13px; margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
+      <b style="color:#0d7a5f">🌟 ۳ نقطه قوت اصلی:</b> ${top3.map(i=>`${i.text} (${toFa(i.score.toFixed(0))})`).join("، ")}<br>
+      <b style="color:#991b1b">⚠️ ۳ نقطه ضعف نیازمند توجه:</b> ${bottom3.map(i=>`${i.text} (${toFa(i.score.toFixed(0))})`).join("، ")}
+    </div>`;
+
+    let actionBox = "";
+    if(bottom3[0].score < 60) {
+      actionBox = `<div class="msg warn" style="margin-top:15px; margin-bottom:0; font-size:12px">
+        <b>اقدام پیشنهادی مدیریت:</b> ضعیف‌ترین عملکرد این پیمانکار در بخش <b>«${bottom3[0].text}»</b> با نمره ${toFa(bottom3[0].score.toFixed(1))} است. پیشنهاد می‌شود جلسه‌ای اختصاصی برای رفع مشکلات این حوزه برگزار شود.
+      </div>`;
+    } else if(top3[0].score > 85) {
+      actionBox = `<div class="msg ok" style="margin-top:15px; margin-bottom:0; font-size:12px">
+        <b>پیام تشویقی:</b> عملکرد این پیمانکار در بخش <b>«${top3[0].text}»</b> بسیار درخشان بوده است. پیشنهاد می‌شود از تیم مربوطه تقدیر ویژه شود.
+      </div>`;
+    }
+
+    const box = document.createElement("div");
+    box.className = "analysis-box";
+    box.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f0f4f8; padding-bottom:10px; margin-bottom:15px">
+        <b style="font-size:16px; color:#0f5c8c">${c.contractor}</b>
+        <span class="badge pending" style="background:#e6f4ee; color:#0d7a5f; font-size:13px;">امتیاز کل: ${toFa(c.avg.toFixed(1))} از ۱۰۰</span>
+      </div>
+      <div style="font-size:12px; color:#6b7280; margin-bottom:8px;">جزئیات نمرات به تفکیک ۱۷ زیرشاخه (از بالاترین تا پایین‌ترین):</div>
+      ${subItemsHtml}
+      ${adviceText}
+      ${actionBox}
+    `;
+    container.appendChild(box);
   });
 }
 
 function exportRankCSV(){
-  const agg = aggregate(); if(!agg.length) return alert("داده‌ای برای خروجی نیست.");
-  const view = document.getElementById("rankView").value; const src = document.getElementById("rankSource").value;
-  let csv = "\uFEFF" + "رتبه,پیمانکار,کارگاه‌ها,تعداد ارزیابی,تعداد رئیس,تعداد مدیر,امتیاز کل,فنی,قراردادی,ارزشی,نیروی انسانی\n";
-  agg.forEach((c,i)=>{ csv += [i+1, c.contractor, c.workshops.join(" | "), c.n, c.nSup, c.nMgr, c.avg.toFixed(2), (c.groups.tech||0).toFixed(2), (c.groups.contract||0).toFixed(2), (c.groups.value||0).toFixed(2), (c.groups.hr||0).toFixed(2)].join(",") + "\n"; });
+  const agg = getAggregatedData(); if(!agg.length) return alert("داده‌ای نیست.");
+  let csv = "\uFEFF" + "رتبه,پیمانکار,تعداد ارزیابی,امتیاز کل,فنی,قراردادی,ارزشی,نیروی انسانی\n";
+  agg.forEach((c,i)=>{ csv += [i+1, c.contractor, c.n, c.avg.toFixed(2), c.groups.tech.toFixed(2), c.groups.contract.toFixed(2), c.groups.value.toFixed(2), c.groups.hr.toFixed(2)].join(",") + "\n"; });
   const blob = new Blob([csv],{type:"text/csv;charset=utf-8"}); const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); const v = view === "ALL" ? "کل_پروژه" : view; const s = src === "all" ? "همه" : src;
-  a.download = `ranking_${v}_${s}_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  a.href = URL.createObjectURL(blob); a.download = `ranking_${new Date().toISOString().slice(0,10)}.csv`; a.click();
 }
 
 function clearAllData(){
@@ -438,12 +543,14 @@ function clearAllData(){
 }
 
 function switchTab(name){
-  ["import", "list", "rank"].forEach(n=>{
+  ["import", "status", "list", "rank", "analysis"].forEach(n=>{
     document.getElementById("tab"+n[0].toUpperCase()+n.slice(1)).classList.toggle("hidden", n !== name);
     document.getElementById("tab"+n[0].toUpperCase()+n.slice(1)+"Btn").classList.toggle("active", n === name);
   });
   if(name === "rank") renderRank();
   if(name === "list") renderList();
+  if(name === "status") renderStatus();
+  if(name === "analysis") renderAnalysis();
 }
 
 if(sessionStorage.getItem("pc_admin_auth") === "1"){ showMain(); }
