@@ -30,6 +30,7 @@
   .btn.danger{background:#dc2626}
   .btn.warn{background:#d97706;color:#fff}
   .btn.print{background:#0d7a5f}
+  .btn.word{background:#2b579a;} /* رنگ آبی ورد */
   .btn.cloud{background:#0284c7;width:100%;padding:12px;font-size:14px;margin-top:10px}
   .msg{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:10px}
   .msg.ok{background:#e6f4ee;color:#0a5c46;border:1px solid #b7e4d3}
@@ -264,7 +265,6 @@ function importRecord(r){
   saveDb(db); return "ok";
 }
 
-// ☁️ ارسال به واسط ورسل (بدون نیاز به VPN)
 async function publishToCloud(){
   const db = getDb();
   const approved = Object.values(db.records).filter(e => e.status === "approved").map(e => e.record);
@@ -272,7 +272,7 @@ async function publishToCloud(){
   
   if(!confirm(`آیا می‌خواهید ${approved.length} ارزیابی تاییدشده را آنلاین کنید تا مدیر پروژه ببیند؟`)) return;
   
-  showMsg("warn", "در حال ارسال به سرور ابری (ممکن است چند لحظه طول بکشد)...");
+  showMsg("warn", "در حال ارسال به سرور ابری...");
   try {
     const res = await fetch("/api/admin", {
       method: "POST",
@@ -459,6 +459,7 @@ function renderAnalysis(){
         <b style="font-size:16px; color:#0f5c8c">${c.contractor}</b>
         <div style="display:flex; gap:8px; align-items:center;">
           <button class="btn print" onclick="printReportCard('${esc(c.contractor)}')">🖨️ چاپ کارنامه</button>
+          <button class="btn word" onclick="exportWordReport('${esc(c.contractor)}')">📝 دانلود Word</button>
           <span class="badge pending" style="background:#e6f4ee; color:#0d7a5f; font-size:13px;">امتیاز: ${toFa(c.avg.toFixed(1))}</span>
         </div>
       </div>
@@ -466,6 +467,195 @@ function renderAnalysis(){
       ${subItemsHtml}${adviceText}${actionBox}`;
     container.appendChild(box);
   });
+}
+
+// ====== تابع جدید: دانلود فایل Word ======
+function exportWordReport(contractorName) {
+  const agg = getAggregatedData();
+  const c = agg.find(x => x.contractor === contractorName);
+  if(!c) return alert("داده‌ای یافت نشد.");
+  
+  let allItemsArray = ALL_ITEMS.map(it => ({ id: it.id, text: it.t, group: it.glabel, score: c.items[it.id] !== undefined ? c.items[it.id] : 0 })).sort((a,b) => b.score - a.score);
+  const top3 = allItemsArray.slice(0, 3);
+  const bottom3 = allItemsArray.slice(-3).reverse();
+  const today = new Date().toLocaleDateString("fa-IR");
+  
+  const scoreColor = c.avg >= 80 ? '#15803d' : c.avg >= 60 ? '#b45309' : '#b91c1c';
+  const scoreBg = c.avg >= 80 ? '#dcfce7' : c.avg >= 60 ? '#fef3c7' : '#fee2e2';
+  
+  const groups = CRITERIA.map(g => ({ label: g.label, val: c.groups[g.key] || 0 })).sort((a,b) => a.val - b.val);
+  const weakestGroup = groups[0];
+  let summary = "";
+  if (c.avg >= 85) summary = "عملکرد کلی این پیمانکار بسیار خوب ارزیابی شده است.";
+  else if (c.avg >= 70) summary = "عملکرد کلی این پیمانکار خوب ارزیابی شده است.";
+  else if (c.avg >= 60) summary = "عملکرد کلی این پیمانکار متوسط ارزیابی شده و نیازمند بهبود است.";
+  else summary = "عملکرد کلی این پیمانکار ضعیف ارزیابی شده و نیازمند اقدام جدی است.";
+  
+  let advice = `<p style="margin:0 0 6px">${summary}</p>`;
+  if (weakestGroup.val < 65) advice += `<p style="margin:0 0 6px"><b>حوزه نیازمند توجه:</b> «${weakestGroup.label}» با امتیاز ${toFa(weakestGroup.val.toFixed(1))} ضعیف‌ترین بخش است.</p>`;
+  advice += `<p style="margin:0 0 6px"><b>پیشنهاد برای بهبود:</b> تمرکز بر رفع چالش‌های «${bottom3[0].text}» و «${bottom3[1].text}».</p>`;
+  if (c.avg >= 80) advice += `<p style="margin:0"><b>تشویق:</b> شایسته تقدیر به دلیل عملکرد درخشان در «${top3[0].text}».</p>`;
+
+  let detailTableRows = "";
+  const half = Math.ceil(ALL_ITEMS.length / 2);
+  for (let i = 0; i < half; i++) {
+    const it1 = ALL_ITEMS[i];
+    const it2 = ALL_ITEMS[i + half];
+    const s1 = c.items[it1.id] || 0;
+    const cls1 = s1 >= 80 ? "background:#dcfce7; color:#15803d;" : s1 >= 60 ? "background:#fef3c7; color:#b45309;" : "background:#fee2e2; color:#b91c1c;";
+    let rowHtml = `<tr><td style="border:1px solid #cbd5e1; padding:4px;">${it1.t}</td><td style="border:1px solid #cbd5e1; padding:4px; text-align:center; font-weight:bold; ${cls1}">${toFa(s1.toFixed(1))}</td>`;
+    if (it2) {
+      const s2 = c.items[it2.id] || 0;
+      const cls2 = s2 >= 80 ? "background:#dcfce7; color:#15803d;" : s2 >= 60 ? "background:#fef3c7; color:#b45309;" : "background:#fee2e2; color:#b91c1c;";
+      rowHtml += `<td style="border:1px solid #cbd5e1; padding:4px;">${it2.t}</td><td style="border:1px solid #cbd5e1; padding:4px; text-align:center; font-weight:bold; ${cls2}">${toFa(s2.toFixed(1))}</td></tr>`;
+    } else {
+      rowHtml += `<td colspan="2" style="border:1px solid #cbd5e1;"></td></tr>`;
+    }
+    detailTableRows += rowHtml;
+  }
+
+  const html = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+      <meta charset='utf-8'>
+      <title>کارنامه ${contractorName}</title>
+      <style>
+        body { font-family: "Tahoma", sans-serif; direction: rtl; font-size: 11px; }
+        table { border-collapse: collapse; width: 100%; }
+        .header-table td { border-bottom: 2px solid #0f5c8c; padding-bottom: 10px; }
+      </style>
+    </head>
+    <body dir="rtl">
+      
+      <!-- کادر اصلی -->
+      <table style="border: 2px solid #0f5c8c; padding: 10px; width: 100%;">
+        <tr>
+          <td style="padding: 15px;">
+            
+            <!-- سربرگ -->
+            <table class="header-table" width="100%">
+              <tr>
+                <td align="right" width="80%">
+                  <h1 style="color: #0f5c8c; margin: 0; font-size: 20px;">کارنامه رسمی عملکرد پیمانکار</h1>
+                  <p style="color: #6b7280; margin: 2px 0 0 0; font-size: 11px;">مدیریت نظارت و بازرسی نمایندگی — سامانه ارزیابی عملکرد</p>
+                </td>
+                <td align="left" width="20%" style="text-align: center;">
+                  <div style="font-size: 30px;">🏆</div>
+                </td>
+              </tr>
+            </table>
+            <br>
+
+            <!-- اطلاعات پیمانکار -->
+            <table style="border: 1px solid #cbd5e1; margin-bottom: 15px;">
+              <tr>
+                <td style="background: #f0f6fb; font-weight: bold; color: #0f5c8c; padding: 6px; border: 1px solid #cbd5e1; width: 15%;">نام پیمانکار</td>
+                <td style="padding: 6px; border: 1px solid #cbd5e1; width: 35%;"><b>${contractorName}</b></td>
+                <td style="background: #f0f6fb; font-weight: bold; color: #0f5c8c; padding: 6px; border: 1px solid #cbd5e1; width: 15%;">تاریخ گزارش</td>
+                <td style="padding: 6px; border: 1px solid #cbd5e1; width: 35%;">${today}</td>
+              </tr>
+              <tr>
+                <td style="background: #f0f6fb; font-weight: bold; color: #0f5c8c; padding: 6px; border: 1px solid #cbd5e1;">کارگاه(ها)</td>
+                <td colspan="3" style="padding: 6px; border: 1px solid #cbd5e1;">${c.workshops.join(" ، ") || "ویژه (بدون کارگاه)"}</td>
+              </tr>
+              <tr>
+                <td style="background: #f0f6fb; font-weight: bold; color: #0f5c8c; padding: 6px; border: 1px solid #cbd5e1;">تعداد ارزیابی</td>
+                <td style="padding: 6px; border: 1px solid #cbd5e1;">${toFa(c.n)} ارزیابی</td>
+                <td style="background: #f0f6fb; font-weight: bold; color: #0f5c8c; padding: 6px; border: 1px solid #cbd5e1;">شاخص‌ها</td>
+                <td style="padding: 6px; border: 1px solid #cbd5e1;">${toFa(ALL_ITEMS.length)} شاخص</td>
+              </tr>
+            </table>
+
+            <!-- امتیاز و نمودار -->
+            <table style="margin-bottom: 15px;">
+              <tr>
+                <td width="30%" style="text-align: center; vertical-align: middle; background: ${scoreBg}; border: 2px solid ${scoreColor}; padding: 15px;">
+                  <div style="font-size: 36px; font-weight: bold; color: ${scoreColor}; margin-bottom: 5px;">${toFa(c.avg.toFixed(2))}</div>
+                  <div style="font-size: 12px; font-weight: bold; color: #4b5563;">امتیاز کل از ۱۰۰</div>
+                </td>
+                <td width="5%"></td>
+                <td width="65%" style="vertical-align: middle;">
+                  <table>
+                    ${CRITERIA.map(g => {
+                      const val = c.groups[g.key] || 0;
+                      return `<tr>
+                        <td width="25%" style="font-weight: bold; font-size: 11px;">${g.label}</td>
+                        <td width="65%"><div style="background: #e5e7eb; height: 12px; width: 100%;"><div style="background: #0f5c8c; height: 12px; width: ${val}%;"></div></div></td>
+                        <td width="10%" style="font-weight: bold; color: #0f5c8c; text-align: left;">${toFa(val.toFixed(1))}</td>
+                      </tr>`;
+                    }).join("")}
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- نقاط قوت و ضعف -->
+            <table style="margin-bottom: 15px;">
+              <tr>
+                <td width="48%" style="background: #dcfce7; border-right: 4px solid #15803d; padding: 10px; vertical-align: top;">
+                  <h3 style="margin: 0 0 6px 0; font-size: 12px; color: #15803d;">🌟 نقاط قوت اصلی</h3>
+                  <ul style="margin: 0; padding-right: 15px; font-size: 11px;">
+                    ${top3.map(it => `<li style="margin-bottom: 3px;"><b>${it.text}</b> (${toFa(it.score.toFixed(1))})</li>`).join("")}
+                  </ul>
+                </td>
+                <td width="4%"></td>
+                <td width="48%" style="background: #fee2e2; border-right: 4px solid #b91c1c; padding: 10px; vertical-align: top;">
+                  <h3 style="margin: 0 0 6px 0; font-size: 12px; color: #b91c1c;">⚠️ نقاط قابل بهبود</h3>
+                  <ul style="margin: 0; padding-right: 15px; font-size: 11px;">
+                    ${bottom3.map(it => `<li style="margin-bottom: 3px;"><b>${it.text}</b> (${toFa(it.score.toFixed(1))})</li>`).join("")}
+                  </ul>
+                </td>
+              </tr>
+            </table>
+
+            <!-- جدول ۱۷ زیرشاخه -->
+            <div style="font-size: 12px; font-weight: bold; color: #0f5c8c; margin-bottom: 5px;">📋 جزئیات امتیازات زیرشاخه‌ها:</div>
+            <table style="border: 1px solid #cbd5e1; font-size: 10px;">
+              <thead>
+                <tr style="background: #f0f4f8;">
+                  <th style="border: 1px solid #cbd5e1; padding: 5px;">شاخص ارزیابی</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 5px; width: 40px;">امتیاز</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 5px;">شاخص ارزیابی</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 5px; width: 40px;">امتیاز</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${detailTableRows}
+              </tbody>
+            </table>
+            <br>
+
+            <!-- جمع‌بندی -->
+            <div style="background: #fef3c7; border-right: 4px solid #d97706; padding: 10px; font-size: 11px; margin-bottom: 30px;">
+              <b>💡 جمع‌بندی مدیریتی:</b> ${advice}
+            </div>
+
+            <!-- امضاها -->
+            <table style="margin-top: 30px; text-align: center;">
+              <tr>
+                <td width="33%"><div style="border-bottom: 1px dashed #374151; height: 40px; margin-bottom: 5px;"></div><b>مدیریت نظارت و بازرسی</b></td>
+                <td width="33%"><div style="border-bottom: 1px dashed #374151; height: 40px; margin-bottom: 5px;"></div><b>مسئول نمایندگی</b></td>
+                <td width="33%"><div style="border-bottom: 1px dashed #374151; height: 40px; margin-bottom: 5px;"></div><b>مدیر پروژه</b></td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+      </table>
+      
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `کارنامه_${contractorName}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function printReportCard(contractorName) {
