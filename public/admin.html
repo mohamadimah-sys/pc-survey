@@ -268,7 +268,7 @@ function approve(id){ if(!confirm("تایید شود؟")) return; updateRow(id, 
 function reject(id){ const reason = prompt("دلیل رد:"); if(reason === null) return; updateRow(id, { status: "rejected", note: reason }); showMsg("ok", "✓ رد شد"); }
 function reopen(id){ const typed = prompt("برای بازگشایی، عبارت «لغو» را تایپ کنید:"); if(typed !== "لغو") return alert("عبارت اشتباه."); updateRow(id, { status: "pending", note: null }); showMsg("ok", "✓ بازگشایی شد"); }
 
-// ====== کلید بازگشایی (اضافه شد) ======
+// کلید بازگشایی
 function makeUnlockCode(recordId) {
   const secret = "ADMIN-UNLOCK-KEY-2025";
   return simpleHash(secret + "|" + recordId).slice(0, 8).toUpperCase();
@@ -321,7 +321,6 @@ function renderList(){
     const badgeTxt = r.status === "approved" ? "✓ تایید" : r.status === "rejected" ? "✕ رد" : "⏳ انتظار";
     const typeBadge = r.evaluator_type === "manager" ? `<span class="tag mgr">مدیر</span>` : `<span class="tag">رئیس</span>`;
     
-    // دکمه‌های عملیات (شامل دکمه کلید بازگشایی)
     let ops = "";
     if(r.status === "pending"){
       ops = `<button class="btn ok" onclick="approve('${esc(r.id)}')">✓</button> <button class="btn danger" onclick="reject('${esc(r.id)}')">✕</button>`;
@@ -438,6 +437,7 @@ function renderAnalysis(){
   });
 }
 
+// ====== چاپ کارنامه تک‌صفحه‌ای و گرافیکی ======
 function printReportCard(contractorName) {
   const agg = getAggregatedData();
   const c = agg.find(x => x.contractor === contractorName);
@@ -459,10 +459,32 @@ function printReportCard(contractorName) {
   else if (c.avg >= 60) summary = "عملکرد کلی این پیمانکار <b>متوسط</b> ارزیابی شده و نیازمند بهبود است.";
   else summary = "عملکرد کلی این پیمانکار <b>ضعیف</b> ارزیابی شده و نیازمند اقدام جدی است.";
   
-  let advice = `<p style="margin:0 0 10px">${summary}</p>`;
-  if (weakestGroup.val < 65) advice += `<p style="margin:0 0 10px"><b>حوزه نیازمند توجه فوری:</b> «${weakestGroup.label}» با امتیاز ${toFa(weakestGroup.val.toFixed(1))} از ۱۰۰ پایین‌ترین عملکرد را داشته است.</p>`;
-  advice += `<p style="margin:0 0 10px"><b>پیشنهاد برای بهبود:</b> تمرکز اصلی بر رفع چالش‌های «${bottom3[0].text}» و «${bottom3[1].text}» باشد.</p>`;
-  if (c.avg >= 80) advice += `<p style="margin:0"><b>تشویق:</b> به دلیل عملکرد درخشان در «${top3[0].text}»، شایسته تقدیر است.</p>`;
+  let advice = `<p style="margin:0 0 6px">${summary}</p>`;
+  if (weakestGroup.val < 65) advice += `<p style="margin:0 0 6px"><b>حوزه نیازمند توجه:</b> «${weakestGroup.label}» با امتیاز ${toFa(weakestGroup.val.toFixed(1))} ضعیف‌ترین بخش است.</p>`;
+  advice += `<p style="margin:0 0 6px"><b>پیشنهاد برای بهبود:</b> تمرکز بر رفع چالش‌های «${bottom3[0].text}» و «${bottom3[1].text}».</p>`;
+  if (c.avg >= 80) advice += `<p style="margin:0"><b>تشویق:</b> شایسته تقدیر به دلیل عملکرد درخشان در «${top3[0].text}».</p>`;
+
+  // ساخت جدول ۱۷ زیرشاخه به صورت دو ستونی برای صرفه‌جویی در فضا
+  let detailTableRows = "";
+  const half = Math.ceil(ALL_ITEMS.length / 2);
+  for (let i = 0; i < half; i++) {
+    const it1 = ALL_ITEMS[i];
+    const it2 = ALL_ITEMS[i + half];
+    
+    const s1 = c.items[it1.id] || 0;
+    const cls1 = s1 >= 80 ? "s-high" : s1 >= 60 ? "s-mid" : "s-low";
+    
+    let rowHtml = `<tr><td>${it1.t}</td><td class="score ${cls1}">${toFa(s1.toFixed(1))}</td>`;
+    
+    if (it2) {
+      const s2 = c.items[it2.id] || 0;
+      const cls2 = s2 >= 80 ? "s-high" : s2 >= 60 ? "s-mid" : "s-low";
+      rowHtml += `<td>${it2.t}</td><td class="score ${cls2}">${toFa(s2.toFixed(1))}</td></tr>`;
+    } else {
+      rowHtml += `<td colspan="2"></td></tr>`;
+    }
+    detailTableRows += rowHtml;
+  }
 
   const win = window.open("", "_blank");
   win.document.write(`
@@ -472,44 +494,76 @@ function printReportCard(contractorName) {
       <meta charset="utf-8">
       <title>کارنامه - ${contractorName}</title>
       <style>
-        @page { size: A4; margin: 15mm; }
+        @page { size: A4 portrait; margin: 5mm; }
         * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        body { font-family: "Vazirmatn", "IRANSans", Tahoma, sans-serif; color: #1f2937; margin: 0; padding: 20px; line-height: 1.8; font-size: 13px; }
-        .header { text-align: center; border-bottom: 3px solid #0f5c8c; padding-bottom: 15px; margin-bottom: 20px; }
-        .header h1 { margin: 0 0 8px; color: #0f5c8c; font-size: 22px; }
-        .header p { margin: 0; color: #6b7280; font-size: 13px; }
-        .meta-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
-        .meta-table td { padding: 8px; border: 1px solid #e2e8f0; font-size: 13px; }
-        .meta-table td:first-child, .meta-table td:nth-child(3) { background: #f0f6fb; font-weight: bold; width: 22%; color: #0f5c8c; }
-        .score-banner { text-align: center; padding: 20px; border-radius: 12px; margin-bottom: 25px; background: ${scoreBg}; border: 2px solid ${scoreColor}; }
-        .score-banner .num { font-size: 48px; font-weight: bold; color: ${scoreColor}; line-height: 1; }
-        .score-banner .lbl { font-size: 14px; color: #4b5563; margin-top: 6px; }
-        .section-title { background: #0f5c8c; color: white; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin: 25px 0 12px; }
-        .cat-row { display: flex; align-items: center; margin-bottom: 10px; }
-        .cat-label { width: 140px; font-weight: bold; font-size: 13px; }
-        .cat-bar-bg { flex: 1; height: 14px; background: #e5e7eb; border-radius: 7px; overflow: hidden; margin: 0 12px; }
-        .cat-bar-fill { height: 100%; background: linear-gradient(90deg, #0f5c8c, #0d7a5f); }
-        .cat-score { width: 60px; text-align: center; font-weight: bold; color: #0f5c8c; }
-        table.detail-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        table.detail-table th { background: #f0f4f8; color: #0f5c8c; padding: 8px; border: 1px solid #e2e8f0; }
-        table.detail-table td { padding: 6px 10px; border: 1px solid #e2e8f0; }
-        table.detail-table td.score { text-align: center; font-weight: bold; width: 70px; }
-        .s-high { color: #15803d; background: #dcfce7; }
-        .s-mid { color: #b45309; background: #fef3c7; }
-        .s-low { color: #b91c1c; background: #fee2e2; }
-        .strength-box, .weakness-box { padding: 12px; border-radius: 8px; margin-bottom: 10px; }
-        .strength-box { background: #dcfce7; border-right: 4px solid #15803d; }
-        .weakness-box { background: #fee2e2; border-right: 4px solid #b91c1c; }
-        .strength-box ol, .weakness-box ol { margin: 0; padding-right: 20px; }
-        .strength-box li, .weakness-box li { margin-bottom: 4px; font-size: 13px; }
-        .recommendation { background: #fef3c7; border-right: 4px solid #d97706; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 15px; }
-        .signature { margin-top: 40px; display: flex; justify-content: space-between; padding-top: 15px; border-top: 1px dashed #9ca3af; }
-        .signature div { width: 45%; text-align: center; font-size: 12px; }
-        .signature .line { border-bottom: 1px solid #374151; height: 60px; margin-bottom: 6px; }
-        .footer { text-align: center; color: #6b7280; font-size: 11px; margin-top: 30px; padding-top: 15px; border-top: 1px solid #e5e7eb; }
-        .no-print { text-align: center; margin-bottom: 20px; padding: 12px; background: #eff6ff; border-radius: 8px; }
-        .no-print button { padding: 10px 24px; background: #0f5c8c; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; }
-        @media print { .no-print { display: none; } }
+        body { 
+          font-family: "Vazirmatn", "IRANSans", Tahoma, sans-serif; 
+          color: #1f2937; margin: 0; padding: 0; line-height: 1.4; font-size: 11px; 
+          background: #fff;
+        }
+        .page-border { 
+          border: 3px solid #0f5c8c; 
+          border-radius: 12px; 
+          padding: 15px; 
+          height: 287mm; /* A4 height minus margin */
+          position: relative;
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 12px; }
+        .header-title h1 { margin: 0; color: #0f5c8c; font-size: 20px; }
+        .header-title p { margin: 2px 0 0; color: #6b7280; font-size: 11px; }
+        .header-logo { width: 50px; height: 50px; background: #e6f4ee; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        
+        .meta-table { width: 100%; margin-bottom: 12px; border-collapse: collapse; }
+        .meta-table td { padding: 4px 8px; border: 1px solid #e2e8f0; font-size: 11px; }
+        .meta-table td.label { background: #f0f6fb; font-weight: bold; color: #0f5c8c; width: 15%; }
+        
+        .main-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 12px; }
+        
+        .score-box { 
+          background: ${scoreBg}; 
+          border: 2px solid ${scoreColor}; 
+          border-radius: 12px; 
+          text-align: center; 
+          padding: 15px 10px; 
+          display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .score-box .num { font-size: 42px; font-weight: 900; color: ${scoreColor}; line-height: 1; }
+        .score-box .lbl { font-size: 12px; color: #4b5563; margin-top: 5px; font-weight: bold; }
+        
+        .bars-box { display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+        .cat-row { display: flex; align-items: center; }
+        .cat-label { width: 110px; font-weight: bold; font-size: 11px; color: #374151; }
+        .cat-bar-bg { flex: 1; height: 10px; background: #e5e7eb; border-radius: 5px; overflow: hidden; margin: 0 10px; }
+        .cat-bar-fill { height: 100%; background: linear-gradient(90deg, #0f5c8c, #0d7a5f); border-radius: 5px; }
+        .cat-score { width: 40px; text-align: left; font-weight: bold; color: #0f5c8c; font-size: 11px; }
+        
+        .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .box { padding: 10px; border-radius: 8px; }
+        .box h3 { margin: 0 0 6px; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 4px; }
+        .box.strength { background: #dcfce7; border-right: 4px solid #15803d; }
+        .box.weakness { background: #fee2e2; border-right: 4px solid #b91c1c; }
+        .box ul { margin: 0; padding-right: 15px; font-size: 11px; }
+        .box li { margin-bottom: 3px; }
+        
+        .details-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 12px; }
+        .details-table th { background: #f0f4f8; color: #0f5c8c; padding: 4px; border: 1px solid #e2e8f0; text-align: center; }
+        .details-table td { padding: 3px 6px; border: 1px solid #e2e8f0; }
+        .details-table td.score { text-align: center; font-weight: bold; width: 40px; }
+        .s-high { color: #15803d; background: #f0fdf4; }
+        .s-mid { color: #b45309; background: #fffbeb; }
+        .s-low { color: #b91c1c; background: #fef2f2; }
+        
+        .recommendation { background: #fef3c7; border-right: 4px solid #d97706; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 15px; }
+        
+        .signature { display: flex; justify-content: space-between; margin-top: auto; padding-top: 10px; }
+        .signature div { width: 45%; text-align: center; font-size: 11px; }
+        .signature .line { border-bottom: 1px dashed #374151; height: 40px; margin-bottom: 5px; }
+        
+        .footer { text-align: center; color: #6b7280; font-size: 9px; position: absolute; bottom: 10px; left: 0; right: 0; }
+        
+        .no-print { text-align: center; margin-bottom: 10px; }
+        .no-print button { padding: 8px 20px; background: #0f5c8c; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; }
+        @media print { .no-print { display: none; } body { padding: 0; } .page-border { height: 100%; min-height: 287mm; } }
       </style>
     </head>
     <body>
@@ -517,69 +571,71 @@ function printReportCard(contractorName) {
         <button onclick="window.print()">🖨️ چاپ کارنامه / ذخیره PDF</button>
       </div>
       
-      <div class="header">
-        <h1>کارنامه عملکرد پیمانکار</h1>
-        <p>مدیریت نظارت و بازرسی نمایندگی — سامانه ارزیابی عملکرد پیمانکاران</p>
-      </div>
-      
-      <table class="meta-table">
-        <tr>
-          <td>نام پیمانکار</td><td><b>${contractorName}</b></td>
-          <td>تاریخ گزارش</td><td>${today}</td>
-        </tr>
-        <tr>
-          <td>کارگاه(های) مربوطه</td><td colspan="3">${c.workshops.join(" ، ") || "ویژه (بدون کارگاه)"}</td>
-        </tr>
-        <tr>
-          <td>تعداد ارزیابی‌ها</td><td>${toFa(c.n)} ارزیابی تاییدشده</td>
-          <td>تعداد شاخص‌ها</td><td>${toFa(ALL_ITEMS.length)} شاخص</td>
-        </tr>
-      </table>
-      
-      <div class="score-banner">
-        <div class="num">${toFa(c.avg.toFixed(2))}</div>
-        <div class="lbl">امتیاز کل از ۱۰۰</div>
-      </div>
-      
-      <div class="section-title">📊 عملکرد کلی در ۴ حوزه اصلی</div>
-      ${CRITERIA.map(g => {
-        const val = c.groups[g.key] || 0;
-        return `<div class="cat-row"><div class="cat-label">${g.label}</div><div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${val}%"></div></div><div class="cat-score">${toFa(val.toFixed(1))}</div></div>`;
-      }).join("")}
-      
-      <div class="section-title">📋 جزئیات امتیازات در ۱۷ زیرشاخه</div>
-      <table class="detail-table">
-        <thead><tr><th>حوزه</th><th>شاخص ارزیابی</th><th>امتیاز</th></tr></thead>
-        <tbody>
-          ${CRITERIA.map(g => g.items.map((it, idx) => {
-            const s = c.items[it.id] || 0;
-            const cls = s >= 80 ? "s-high" : s >= 60 ? "s-mid" : "s-low";
-            return `<tr>${idx === 0 ? `<td rowspan="${g.items.length}" style="background:#f8fafc; font-weight:bold; text-align:center; vertical-align:middle">${g.label}</td>` : ""}<td>${it.t}</td><td class="score ${cls}">${toFa(s.toFixed(1))}</td></tr>`;
-          }).join("")).join("")}
-        </tbody>
-      </table>
-      
-      <div class="section-title">🌟 نقاط قوت</div>
-      <div class="strength-box">
-        <ol>${top3.map((it, i) => `<li><b>${it.text}</b> — امتیاز ${toFa(it.score.toFixed(1))} از ۱۰۰</li>`).join("")}</ol>
-      </div>
-      
-      <div class="section-title">⚠️ نقاط قابل بهبود</div>
-      <div class="weakness-box">
-        <ol>${bottom3.map((it, i) => `<li><b>${it.text}</b> — امتیاز ${toFa(it.score.toFixed(1))} از ۱۰۰</li>`).join("")}</ol>
-      </div>
-      
-      <div class="section-title">💡 جمع‌بندی و توصیه مدیریتی</div>
-      <div class="recommendation">${advice}</div>
-      
-      <div class="signature">
-        <div><div class="line"></div><div>مهر و امضای مدیریت نظارت و بازرسی نمایندگی</div></div>
-        <div><div class="line"></div><div>مهر و امضای پیمانکار (جهت اطلاع)</div></div>
-      </div>
-      
-      <div class="footer">
-        این کارنامه بر اساس ${toFa(c.n)} ارزیابی تاییدشده از سوی رؤسای کارگاه و مدیران پروژه تهیه شده است.<br>
-        تاریخ تولید گزارش: ${today} — سامانه ارزیابی عملکرد پیمانکاران
+      <div class="page-border">
+        <div class="header">
+          <div class="header-title">
+            <h1>کارنامه رسمی عملکرد پیمانکار</h1>
+            <p>مدیریت نظارت و بازرسی نمایندگی — سامانه ارزیابی عملکرد</p>
+          </div>
+          <div class="header-logo">🏆</div>
+        </div>
+        
+        <table class="meta-table">
+          <tr>
+            <td class="label">نام پیمانکار</td><td><b>${contractorName}</b></td>
+            <td class="label">تاریخ گزارش</td><td>${today}</td>
+          </tr>
+          <tr>
+            <td class="label">کارگاه(ها)</td><td colspan="3">${c.workshops.join(" ، ") || "ویژه (بدون کارگاه)"}</td>
+          </tr>
+          <tr>
+            <td class="label">تعداد ارزیابی</td><td>${toFa(c.n)} ارزیابی تاییدشده</td>
+            <td class="label">شاخص‌ها</td><td>${toFa(ALL_ITEMS.length)} شاخص</td>
+          </tr>
+        </table>
+        
+        <div class="main-grid">
+          <div class="score-box">
+            <div class="num">${toFa(c.avg.toFixed(2))}</div>
+            <div class="lbl">امتیاز کل از ۱۰۰</div>
+          </div>
+          <div class="bars-box">
+            ${CRITERIA.map(g => {
+              const val = c.groups[g.key] || 0;
+              return `<div class="cat-row"><div class="cat-label">${g.label}</div><div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${val}%"></div></div><div class="cat-score">${toFa(val.toFixed(1))}</div></div>`;
+            }).join("")}
+          </div>
+        </div>
+        
+        <div class="pros-cons-grid">
+          <div class="box strength">
+            <h3>🌟 نقاط قوت اصلی</h3>
+            <ul>${top3.map(it => `<li><b>${it.text}</b> (${toFa(it.score.toFixed(1))})</li>`).join("")}</ul>
+          </div>
+          <div class="box weakness">
+            <h3>⚠️ نقاط قابل بهبود</h3>
+            <ul>${bottom3.map(it => `<li><b>${it.text}</b> (${toFa(it.score.toFixed(1))})</li>`).join("")}</ul>
+          </div>
+        </div>
+        
+        <div style="font-size:11px; font-weight:bold; color:#0f5c8c; margin-bottom:4px;">📋 جزئیات امتیازات ۱۷ زیرشاخه:</div>
+        <table class="details-table">
+          <thead><tr><th>شاخص ارزیابی</th><th>امتیاز</th><th>شاخص ارزیابی</th><th>امتیاز</th></tr></thead>
+          <tbody>${detailTableRows}</tbody>
+        </table>
+        
+        <div class="recommendation">
+          <b>💡 جمع‌بندی مدیریتی:</b> ${advice}
+        </div>
+        
+        <div class="signature">
+          <div><div class="line"></div><div>مهر و امضای مدیریت نظارت و بازرسی</div></div>
+          <div><div class="line"></div><div>مهر و امضای پیمانکار (جهت اطلاع)</div></div>
+        </div>
+        
+        <div class="footer">
+          این کارنامه بر اساس ${toFa(c.n)} ارزیابی تاییدشده تهیه شده است. تاریخ تولید: ${today}
+        </div>
       </div>
     </body>
     </html>
