@@ -110,7 +110,7 @@
             <button class="btn ghost" onclick="importPaste()">افزودن از متن</button>
           </div>
         </div>
-        <div class="hint">فایل‌های تکراری و دست‌کاری‌شده به طور خودکار رد می‌شوند.</div>
+        <div class="hint">فایل‌های تکراری و دست‌کاری‌شده به طور خودکار رد می‌شوند. <b>اگر فایل جدیدتری برای یک پیمانکار آپلود کنید، جایگزین فایل قبلی شده و نیاز به تایید مجدد دارد.</b></div>
       </div>
     </section>
 
@@ -221,28 +221,60 @@ function tryUnlock(){
 function logout(){ sessionStorage.removeItem("pc_admin_auth"); location.reload(); }
 function showMain(){ document.getElementById("screenLogin").classList.add("hidden"); document.getElementById("screenMain").classList.remove("hidden"); populateRankView(); loadData(); }
 
+// آپدیت منطق آپلود: جایگزینی فایل‌های جدیدتر
 document.getElementById("fileInput").addEventListener("change", async e=>{
-  const files = [...e.target.files]; let ok=0, dup=0, bad=0;
+  const files = [...e.target.files]; let ok=0, dup=0, bad=0, upd=0;
   for(const f of files){
     try{ const txt = await f.text(); const parsed = JSON.parse(txt); const arr = Array.isArray(parsed) ? parsed : [parsed];
-      arr.forEach(r=>{ const res = importRecord(r); if(res === "ok") ok++; else if(res === "dup") dup++; else bad++; });
+      arr.forEach(r=>{ 
+        const res = importRecord(r); 
+        if(res === "ok") ok++; 
+        else if(res === "dup") dup++; 
+        else if(res === "updated") upd++;
+        else bad++; 
+      });
     }catch(err){ bad++; }
   }
-  showMsg("ok", `${toFa(ok)} پذیرفته — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`); e.target.value = ""; loadData();
+  showMsg("ok", `${toFa(ok)} پذیرفته — ${toFa(upd)} آپدیت شد — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`); 
+  e.target.value = ""; loadData();
 });
 
 function importPaste(){
   try{
     const parsed = JSON.parse(document.getElementById("pasteBox").value); const arr = Array.isArray(parsed) ? parsed : [parsed];
-    let ok=0, dup=0, bad=0;
-    arr.forEach(r=>{ const res = importRecord(r); if(res==="ok") ok++; else if(res==="dup") dup++; else bad++; });
-    showMsg("ok", `${toFa(ok)} افزوده — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`); document.getElementById("pasteBox").value = ""; loadData();
+    let ok=0, dup=0, bad=0, upd=0;
+    arr.forEach(r=>{ 
+      const res = importRecord(r); 
+      if(res==="ok") ok++; 
+      else if(res==="dup") dup++; 
+      else if(res==="updated") upd++;
+      else bad++; 
+    });
+    showMsg("ok", `${toFa(ok)} افزوده — ${toFa(upd)} آپدیت شد — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`); 
+    document.getElementById("pasteBox").value = ""; loadData();
   }catch(e){ showMsg("err", "متن JSON نامعتبر است."); }
 }
 
 function importRecord(r){
   if(!r || !r.id || !r.supervisor || !r.contractor || !r.scores || !r.hash) return "bad";
-  const db = getDb(); if(db.records[r.id]) return "dup";
+  const db = getDb(); 
+  
+  // بررسی اینکه آیا رکورد وجود دارد و آیا فایل جدیدتر است
+  if(db.records[r.id]) {
+    const oldTime = new Date(db.records[r.id].record.timestamp).getTime();
+    const newTime = new Date(r.timestamp).getTime();
+    
+    if (newTime > oldTime) {
+      // فایل جدید است، جایگزین می‌شود و به حالت "در انتظار تایید" برمی‌گردد
+      db.records[r.id] = { record:r, status:"pending", importedAt:new Date().toISOString() };
+      saveDb(db); 
+      return "updated";
+    } else {
+      return "dup"; // دقیقاً همان فایل قبلی است
+    }
+  }
+  
+  // رکورد جدید
   db.records[r.id] = { record:r, status:"pending", importedAt:new Date().toISOString() };
   saveDb(db); return "ok";
 }
@@ -437,7 +469,7 @@ function renderAnalysis(){
   });
 }
 
-// ====== چاپ کارنامه تک‌صفحه‌ای، گرافیکی و سه امضا ======
+// ====== چاپ کارنامه (با اصلاح جایگاه امضا) ======
 function printReportCard(contractorName) {
   const agg = getAggregatedData();
   const c = agg.find(x => x.contractor === contractorName);
@@ -504,7 +536,7 @@ function printReportCard(contractorName) {
           border: 3px solid #0f5c8c; 
           border-radius: 12px; 
           padding: 15px; 
-          height: 287mm; /* A4 height minus margin */
+          height: 287mm;
           position: relative;
           display: flex;
           flex-direction: column;
@@ -554,10 +586,10 @@ function printReportCard(contractorName) {
         .s-mid { color: #b45309; background: #fffbeb; }
         .s-low { color: #b91c1c; background: #fef2f2; }
         
-        .recommendation { background: #fef3c7; border-right: 4px solid #d97706; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 15px; }
+        .recommendation { background: #fef3c7; border-right: 4px solid #d97706; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 12px; }
         
-        /* بخش امضاها */
-        .signature { display: flex; justify-content: space-between; margin-top: auto; padding-top: 10px; gap: 10px; }
+        /* بخش امضاها - اصلاح شده */
+        .signature { display: flex; justify-content: space-between; margin-top: 30px; margin-bottom: 40px; gap: 10px; }
         .signature div { flex: 1; text-align: center; font-size: 11px; font-weight: bold; color: #374151; }
         .signature .line { border-bottom: 1px dashed #374151; height: 40px; margin-bottom: 5px; }
         
@@ -630,7 +662,7 @@ function printReportCard(contractorName) {
           <b>💡 جمع‌بندی مدیریتی:</b> ${advice}
         </div>
         
-        <!-- سه امضا -->
+        <!-- سه امضا با فاصله اصلاح شده -->
         <div class="signature">
           <div><div class="line"></div><div>مدیریت نظارت و بازرسی</div></div>
           <div><div class="line"></div><div>مسئول نمایندگی</div></div>
