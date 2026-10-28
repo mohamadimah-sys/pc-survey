@@ -113,7 +113,7 @@
         
         <hr style="border:0; border-top:1px dashed #ccc; margin:20px 0">
         <button class="btn cloud" onclick="publishToCloud()">☁️ انتشار آنلاین داده‌های تاییدشده (برای مدیر پروژه)</button>
-        <div class="hint" style="text-align:center">با کلیک روی این دکمه، تمام اطلاعات تاییدشده به سرور ابری ارسال می‌شوند تا پنل مدیر پروژه آن‌ها را ببیند.</div>
+        <div class="hint" style="text-align:center">با کلیک روی این دکمه، تمام اطلاعات تاییدشده مستقیماً به سرور ابری ارسال می‌شوند.</div>
       </div>
     </section>
 
@@ -166,6 +166,10 @@
 </div>
 
 <script>
+// 👇 این دو خط را با اطلاعات خودتان پر کنید 👇
+const SUPABASE_URL = "https://kcsakpgcuodbzdacshe.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzY3Nha3BnY3VvZGJ6ZGFjc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5OTczNzQsImV4cCI6MjEwODU3MzM3NH0.yMBohZK2oEBgStPzhoCZ9IUSdTLzIg9YSGTXGCHDcUk"; // 👈 کلید طولانی که با eyJ شروع می‌شود را اینجا پیست کنید
+
 const ADMIN_PASSWORD = "admin-1404"; 
 const LS_DB = "pc_admin_db_v3";
 
@@ -223,7 +227,6 @@ function tryUnlock(){
 function logout(){ sessionStorage.removeItem("pc_admin_auth"); location.reload(); }
 function showMain(){ document.getElementById("screenLogin").classList.add("hidden"); document.getElementById("screenMain").classList.remove("hidden"); populateRankView(); loadData(); }
 
-// آپلود دستی
 document.getElementById("fileInput").addEventListener("change", async e=>{
   const files = [...e.target.files]; let ok=0, dup=0, bad=0, upd=0;
   for(const f of files){
@@ -265,7 +268,7 @@ function importRecord(r){
   saveDb(db); return "ok";
 }
 
-// ارسال به ابر (آنلاین کردن برای مدیر پروژه)
+// ☁️ اتصال مستقیم مرورگر به Supabase (بدون واسطه ورسل)
 async function publishToCloud(){
   const db = getDb();
   const approved = Object.values(db.records).filter(e => e.status === "approved").map(e => e.record);
@@ -273,18 +276,43 @@ async function publishToCloud(){
   
   if(!confirm(`آیا می‌خواهید ${approved.length} ارزیابی تاییدشده را آنلاین کنید تا مدیر پروژه ببیند؟`)) return;
   
-  showMsg("warn", "در حال ارسال به سرور ابری...");
+  showMsg("warn", "در حال ارسال به سرور ابری (ممکن است چند لحظه طول بکشد)...");
   try {
-    const res = await fetch("/api/admin", {
+    const payload = approved.map(rec => ({
+      id: rec.id,
+      evaluator_type: rec.evaluatorType,
+      evaluator_code: rec.evaluatorCode,
+      supervisor: rec.supervisor,
+      evaluator_role: rec.evaluatorRole,
+      contractor: rec.contractor,
+      workshop_code: rec.workshopCode,
+      workshop_name: rec.workshopName,
+      timestamp: rec.timestamp,
+      scores: rec.scores,
+      groups: rec.groups,
+      total: rec.total,
+      hash: rec.hash,
+      status: "approved"
+    }));
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/evaluations`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(approved)
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates"
+      },
+      body: JSON.stringify(payload)
     });
-    const data = await res.json();
-    if(data.status === "ok") showMsg("ok", "☁️ داده‌ها با موفقیت آنلاین شدند! مدیر پروژه اکنون می‌تواند آن‌ها را ببیند.");
-    else throw new Error(data.message);
+    
+    if(res.ok) showMsg("ok", "☁️ داده‌ها با موفقیت آنلاین شدند! مدیر پروژه اکنون می‌تواند آن‌ها را ببیند.");
+    else {
+      const text = await res.text();
+      throw new Error(text);
+    }
   } catch(err) {
-    showMsg("err", "خطا در ارتباط با سرور: " + err.message);
+    showMsg("err", "خطا در ارتباط با دیتابیس (اگر VPN روشن است، یکبار خاموش/روشن کنید): " + err.message);
   }
 }
 
@@ -296,7 +324,7 @@ function loadData(){
 
 function showMsg(type, text){
   const box = document.getElementById("msgBox"); box.innerHTML = `<div class="msg ${type}">${text}</div>`;
-  setTimeout(()=>{ box.innerHTML = ""; }, 6000);
+  setTimeout(()=>{ box.innerHTML = ""; }, 8000);
 }
 
 function updateRow(id, patch){
@@ -467,9 +495,10 @@ function renderAnalysis(){
 }
 
 function printReportCard(contractorName) {
+  // همان کد چاپ کارنامه قبلی
   const agg = getAggregatedData(); const c = agg.find(x => x.contractor === contractorName); if(!c) return;
   const win = window.open("", "_blank");
-  win.document.write(`<html><body><h2>کارنامه ${contractorName}</h2><p>امتیاز: ${c.avg}</p></body></html>`);
+  win.document.write(`<html dir="rtl"><body><h2 style="text-align:center;color:#0f5c8c;">کارنامه ${contractorName}</h2><p style="text-align:center">امتیاز: ${c.avg}</p><br><button onclick="window.print()">چاپ</button></body></html>`);
   win.document.close();
 }
 

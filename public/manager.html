@@ -108,6 +108,10 @@
 </div>
 
 <script>
+// 👇 این دو خط را با اطلاعات خودتان پر کنید 👇
+const SUPABASE_URL = "https://kcsakpgcuodbzdacshe.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzY3Nha3BnY3VvZGJ6ZGFjc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5OTczNzQsImV4cCI6MjEwODU3MzM3NH0.yMBohZK2oEBgStPzhoCZ9IUSdTLzIg9YSGTXGCHDcUk"; // 👈 کلید طولانی که با eyJ شروع می‌شود را اینجا پیست کنید
+
 const MANAGER_PASSWORD = "manager-1404"; 
 let dataCache = [];
 let refreshTimer = null;
@@ -155,47 +159,42 @@ function logout(){ sessionStorage.removeItem("pc_manager_auth"); location.reload
 function showMain(){ 
   document.getElementById("screenLogin").classList.add("hidden"); 
   document.getElementById("screenMain").classList.remove("hidden"); 
-  populateRankView(); 
-  loadData(); 
-  startAutoRefresh();
+  populateRankView(); loadData(); startAutoRefresh();
 }
 
-// ====== دریافت داده آنلاین از سرور ======
+// ☁️ اتصال مستقیم مرورگر به Supabase
 async function loadData(){
   try {
     document.getElementById("lastUpdate").textContent = "در حال دریافت...";
-    const res = await fetch("/api/admin");
+    
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/evaluations?select=*&order=timestamp.desc`, {
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    
     if(!res.ok) throw new Error("خطای شبکه");
     const rows = await res.json();
     
-    // تبدیل داده‌های دیتابیس به فرمت پنل
     dataCache = rows.map(r => ({
-      id: r.id,
-      evaluatorType: r.evaluator_type,
-      evaluatorCode: r.evaluator_code,
-      supervisor: r.supervisor,
-      evaluatorRole: r.evaluator_role,
-      contractor: r.contractor,
-      workshopCode: r.workshop_code,
-      workshopName: r.workshop_name,
-      timestamp: r.timestamp,
-      scores: r.scores,
-      groups: r.groups,
-      total: r.total,
-      status: r.status
+      id: r.id, evaluatorType: r.evaluator_type, evaluatorCode: r.evaluator_code,
+      supervisor: r.supervisor, evaluatorRole: r.evaluator_role, contractor: r.contractor,
+      workshopCode: r.workshop_code, workshopName: r.workshop_name, timestamp: r.timestamp,
+      scores: r.scores, groups: r.groups, total: r.total, status: r.status
     }));
 
     document.getElementById("lastUpdate").textContent = new Date().toLocaleTimeString("fa-IR");
     renderStatus(); renderRank(); renderAnalysis();
   } catch(e) {
-    document.getElementById("lastUpdate").textContent = "خطا در اتصال";
+    document.getElementById("lastUpdate").textContent = "خطا در اتصال (VPN را چک کنید)";
     console.error(e);
   }
 }
 
 function startAutoRefresh(){
   if(refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(()=>{ if(!document.hidden) loadData(); }, 30000); // هر ۳۰ ثانیه
+  refreshTimer = setInterval(()=>{ if(!document.hidden) loadData(); }, 30000);
 }
 
 function renderStatus(){
