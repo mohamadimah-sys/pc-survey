@@ -158,26 +158,29 @@ function showMain(){
   populateRankView(); loadData(); startAutoRefresh();
 }
 
-// ☁️ دریافت داده از واسط ورسل (بدون نیاز به VPN)
+// ☁️ دریافت داده از واسط ورسل با ضد کش (Cache Buster)
 async function loadData(){
   const errEl = document.getElementById("lastUpdate");
   errEl.textContent = "در حال دریافت...";
   errEl.style.color = "#fde68a";
   
   try {
-    const res = await fetch(`/api/admin`, { cache: "no-store" });
+    // 👈 اضافه کردن t=Date.now() برای دور زدن کامل کش
+    const res = await fetch(`/api/admin?t=${Date.now()}`, { cache: "no-store" });
     if(!res.ok) throw new Error("خطای شبکه");
     
     const rows = await res.json();
     
-    dataCache = rows.map(r => ({
+    // فیلتر کردن رکوردهای بدون ID برای جلوگیری از خطا
+    dataCache = rows.filter(r => r && r.id).map(r => ({
       id: r.id, evaluatorType: r.evaluator_type, evaluatorCode: r.evaluator_code,
       supervisor: r.supervisor, evaluatorRole: r.evaluator_role, contractor: r.contractor,
       workshopCode: r.workshop_code, workshopName: r.workshop_name, timestamp: r.timestamp,
       scores: r.scores, groups: r.groups, total: r.total, status: r.status
     }));
 
-    errEl.textContent = "آخرین بروزرسانی: " + new Date().toLocaleTimeString("fa-IR");
+    // 👈 نمایش تعداد کل رکوردهای دریافتی برای دیباگ
+    errEl.textContent = `آخرین بروزرسانی: ${new Date().toLocaleTimeString("fa-IR")} | کل رکوردها در دیتابیس: ${toFa(dataCache.length)}`;
     errEl.style.color = "#a7f3d0";
     
     renderStatus(); renderRank(); renderAnalysis();

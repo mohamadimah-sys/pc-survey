@@ -4,7 +4,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Cache-Control", "no-store, max-age=0");
+  res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate"); // 👈 ضد کش
   if (req.method === "OPTIONS") return res.status(200).end();
 
   let SB_URL = (process.env.SUPABASE_URL || "").trim().replace(/\/$/, "");
@@ -43,7 +43,7 @@ function makeRequest(url, method, key, body) {
     const options = {
       hostname: u.hostname, path: u.pathname + u.search, method: method,
       headers: { "apikey": key, "Authorization": `Bearer ${key}`, "User-Agent": "Mozilla/5.0", "Accept": "application/json" },
-      timeout: 15000
+      timeout: 30000 // 👈 افزایش زمان انتظار به ۳۰ ثانیه
     };
     if (payload) {
       options.headers["Content-Type"] = "application/json";
