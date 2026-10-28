@@ -29,6 +29,7 @@
   .btn.ok{background:#0d7a5f}
   .btn.danger{background:#dc2626}
   .btn.warn{background:#d97706;color:#fff}
+  .btn.print{background:#0d7a5f}
   .msg{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:10px}
   .msg.ok{background:#e6f4ee;color:#0a5c46;border:1px solid #b7e4d3}
   .msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
@@ -56,13 +57,10 @@
   
   /* استایل‌های تحلیل عمیق */
   .analysis-box{background:#fff;border-radius:12px;padding:15px;margin-bottom:15px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,0.05)}
-  .progress-bar-bg{background:#e2e8f0;height:6px;border-radius:10px;overflow:hidden;margin-top:4px}
-  .progress-bar-fill{height:100%;border-radius:10px}
   .proj-stat-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;margin-bottom:20px}
   .proj-stat{background:#f0f6fb;border:1px solid #d0e2f1;padding:12px;border-radius:12px;text-align:center}
   .proj-stat b{display:block;font-size:22px;color:var(--brand);margin-bottom:4px}
   
-  /* استایل جدول زیرشاخه‌ها */
   .sub-items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
   @media(max-width:700px){ .sub-items-grid { grid-template-columns: 1fr; } }
   .sub-item-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #eef2f7; }
@@ -105,16 +103,10 @@
         <h2>دریافت فایل‌های ارزیابی (از ایتا)</h2>
         <div class="grid2">
           <div>
-            <div class="field">
-              <label>بارگذاری فایل‌های JSON</label>
-              <input type="file" id="fileInput" accept=".json" multiple>
-            </div>
+            <div class="field"><label>بارگذاری فایل‌های JSON</label><input type="file" id="fileInput" accept=".json" multiple></div>
           </div>
           <div>
-            <div class="field">
-              <label>یا چسباندن محتوای JSON</label>
-              <textarea id="pasteBox" placeholder='[{"id":"...","supervisor":"...","contractor":"...","scores":{},"hash":"..."}]'></textarea>
-            </div>
+            <div class="field"><label>یا چسباندن محتوای JSON</label><textarea id="pasteBox" placeholder='[{"id":"...","supervisor":"...","contractor":"...","scores":{},"hash":"..."}]'></textarea></div>
             <button class="btn ghost" onclick="importPaste()">افزودن از متن</button>
           </div>
         </div>
@@ -126,12 +118,7 @@
       <div class="card">
         <h2>وضعیت دریافت فرم‌ها <span class="w" id="statusProgress">۰ / ۰</span></h2>
         <div class="hint" style="margin-bottom:15px">این جدول بر اساس چارت سازمانی پروژه ساخته شده است. اگر کسی فرمی نفرستاده باشد، با رنگ قرمز مشخص می‌شود.</div>
-        <div class="scroll">
-          <table id="statusTable">
-            <thead><tr><th>نقش</th><th>نام ارزیاب</th><th>پیمانکار هدف</th><th>وضعیت</th><th>عملیات</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="scroll"><table id="statusTable"><thead><tr><th>نقش</th><th>نام ارزیاب</th><th>پیمانکار هدف</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
 
@@ -141,18 +128,11 @@
         <div class="filters">
           <label>فیلتر:</label>
           <select id="filterStatus" onchange="renderList()">
-            <option value="all">همه وضعیت‌ها</option>
-            <option value="pending">در انتظار تایید</option>
-            <option value="approved">تاییدشده</option>
-            <option value="rejected">رد‌شده</option>
+            <option value="all">همه وضعیت‌ها</option><option value="pending">در انتظار تایید</option>
+            <option value="approved">تاییدشده</option><option value="rejected">رد‌شده</option>
           </select>
         </div>
-        <div class="scroll">
-          <table id="subsTable">
-            <thead><tr><th>ارزیاب</th><th>نوع</th><th>کارگاه</th><th>پیمانکار</th><th>تاریخ</th><th>امتیاز</th><th>وضعیت</th><th>عملیات</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="scroll"><table id="subsTable"><thead><tr><th>ارزیاب</th><th>نوع</th><th>کارگاه</th><th>پیمانکار</th><th>تاریخ</th><th>امتیاز</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
 
@@ -160,17 +140,9 @@
       <div class="card">
         <h2>رتبه‌بندی نهایی</h2>
         <div class="filters">
-          <label>نمای:</label>
-          <select id="rankView" onchange="renderRank()">
-            <option value="ALL">🏆 کل پروژه</option>
-          </select>
+          <label>نمای:</label><select id="rankView" onchange="renderRank()"><option value="ALL">🏆 کل پروژه</option></select>
         </div>
-        <div class="scroll">
-          <table id="rankTable">
-            <thead><tr><th>رتبه</th><th>پیمانکار</th><th>کارگاه(ها)</th><th>تعداد ارزیابی</th><th>امتیاز کل</th><th>فنی</th><th>قراردادی</th><th>ارزشی</th><th>نیروی انسانی</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="scroll"><table id="rankTable"><thead><tr><th>رتبه</th><th>پیمانکار</th><th>کارگاه(ها)</th><th>تعداد</th><th>امتیاز کل</th><th>فنی</th><th>قراردادی</th><th>ارزشی</th><th>نیروی انسانی</th></tr></thead><tbody></tbody></table></div>
         <div style="margin-top:14px">
           <button class="btn ghost" onclick="exportRankCSV()">⬇️ خروجی CSV</button>
           <button class="btn danger" onclick="clearAllData()" style="float:left">🗑️ پاک کردن داده‌ها</button>
@@ -183,7 +155,6 @@
         <h2>تحلیل کلی پروژه</h2>
         <div class="proj-stat-grid" id="projStats"></div>
       </div>
-      
       <div class="card">
         <h2>تحلیل عملکرد پیمانکاران (بر اساس ۱۷ زیرشاخه)</h2>
         <div id="analysisContainer"></div>
@@ -219,32 +190,11 @@ const CONFIG = {
   ]
 };
 
-// 👇 حالا متن دقیق سوالات هم اضافه شده است
 const CRITERIA = [
-  { key:"tech", label:"فنی و اجرایی", items:[
-    {id:"t1",w:12, t:"کیفیت اجرا و انطباق فنی"}, 
-    {id:"t2",w:8, t:"برنامه‌ریزی و کنترل زمان"},
-    {id:"t3",w:5, t:"تجهیزات و ماشین‌آلات"}, 
-    {id:"t4",w:5, t:"ایمنی، بهداشت و محیط زیست (HSE)"}
-  ]},
-  { key:"contract", label:"قراردادی و مدیریتی", items:[
-    {id:"c1",w:8, t:"تعامل و پاسخگویی با کارفرما و ناظر"}, 
-    {id:"c2",w:6, t:"مدیریت اداری و مستندسازی"},
-    {id:"c3",w:6, t:"حسن سابقه و اعتبار"}
-  ]},
-  { key:"value", label:"اخلاقی، اعتقادی و سیاسی", items:[
-    {id:"v1",w:6, t:"پایبندی به ارزش‌های اخلاقی و اعتقادی"}, 
-    {id:"v2",w:4, t:"رفتار سیاسی مسئولانه"},
-    {id:"v3",w:4, t:"صداقت، شفافیت و سلامت اداری"}, 
-    {id:"v4",w:4, t:"کرامت، عدالت و عدم تبعیض"}, 
-    {id:"v5",w:2, t:"فرهنگ سازمانی"}
-  ]},
-  { key:"hr", label:"نیروی انسانی", items:[
-    {id:"h1",w:12, t:"پرداخت به‌موقع حقوق"}, 
-    {id:"h2",w:8, t:"بیمه و تأمین اجتماعی"},
-    {id:"h3",w:5, t:"رفاه، ایمنی روانی و شرایط کار"}, 
-    {id:"h4",w:5, t:"آموزش و توانمندسازی"}
-  ]}
+  { key:"tech", label:"فنی و اجرایی", items:[{id:"t1",w:12, t:"کیفیت اجرا و انطباق فنی"},{id:"t2",w:8, t:"برنامه‌ریزی و کنترل زمان"},{id:"t3",w:5, t:"تجهیزات و ماشین‌آلات"},{id:"t4",w:5, t:"ایمنی، بهداشت و محیط زیست (HSE)"}]},
+  { key:"contract", label:"قراردادی و مدیریتی", items:[{id:"c1",w:8, t:"تعامل و پاسخگویی با کارفرما و ناظر"},{id:"c2",w:6, t:"مدیریت اداری و مستندسازی"},{id:"c3",w:6, t:"حسن سابقه و اعتبار"}]},
+  { key:"value", label:"اخلاقی، اعتقادی و سیاسی", items:[{id:"v1",w:6, t:"پایبندی به ارزش‌های اخلاقی و اعتقادی"},{id:"v2",w:4, t:"رفتار سیاسی مسئولانه"},{id:"v3",w:4, t:"صداقت، شفافیت و سلامت اداری"},{id:"v4",w:4, t:"کرامت، عدالت و عدم تبعیض"},{id:"v5",w:2, t:"فرهنگ سازمانی"}]},
+  { key:"hr", label:"نیروی انسانی", items:[{id:"h1",w:12, t:"پرداخت به‌موقع حقوق"},{id:"h2",w:8, t:"بیمه و تأمین اجتماعی"},{id:"h3",w:5, t:"رفاه، ایمنی روانی و شرایط کار"},{id:"h4",w:5, t:"آموزش و توانمندسازی"}]}
 ];
 const ALL_ITEMS = CRITERIA.flatMap(g=>g.items.map(i=>({...i, gkey:g.key, glabel:g.label})));
 
@@ -278,36 +228,27 @@ document.getElementById("fileInput").addEventListener("change", async e=>{
   let ok=0, dup=0, bad=0;
   for(const f of files){
     try{
-      const txt = await f.text();
-      const parsed = JSON.parse(txt);
-      const arr = Array.isArray(parsed) ? parsed : [parsed];
-      arr.forEach(r=>{
-        const res = importRecord(r);
-        if(res === "ok") ok++; else if(res === "dup") dup++; else bad++;
-      });
+      const txt = await f.text(); const parsed = JSON.parse(txt); const arr = Array.isArray(parsed) ? parsed : [parsed];
+      arr.forEach(r=>{ const res = importRecord(r); if(res === "ok") ok++; else if(res === "dup") dup++; else bad++; });
     }catch(err){ bad++; }
   }
   showMsg("ok", `${toFa(ok)} پذیرفته — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`);
-  e.target.value = "";
-  loadData();
+  e.target.value = ""; loadData();
 });
 
 function importPaste(){
   try{
-    const parsed = JSON.parse(document.getElementById("pasteBox").value);
-    const arr = Array.isArray(parsed) ? parsed : [parsed];
+    const parsed = JSON.parse(document.getElementById("pasteBox").value); const arr = Array.isArray(parsed) ? parsed : [parsed];
     let ok=0, dup=0, bad=0;
     arr.forEach(r=>{ const res = importRecord(r); if(res==="ok") ok++; else if(res==="dup") dup++; else bad++; });
     showMsg("ok", `${toFa(ok)} افزوده — ${toFa(dup)} تکراری — ${toFa(bad)} نامعتبر.`);
-    document.getElementById("pasteBox").value = "";
-    loadData();
+    document.getElementById("pasteBox").value = ""; loadData();
   }catch(e){ showMsg("err", "متن JSON نامعتبر است."); }
 }
 
 function importRecord(r){
   if(!r || !r.id || !r.supervisor || !r.contractor || !r.scores || !r.hash) return "bad";
-  const db = getDb();
-  if(db.records[r.id]) return "dup";
+  const db = getDb(); if(db.records[r.id]) return "dup";
   db.records[r.id] = { record:r, status:"pending", importedAt:new Date().toISOString() };
   saveDb(db); return "ok";
 }
@@ -326,8 +267,7 @@ function showMsg(type, text){
 
 function updateRow(id, patch){
   const db = getDb(); if(!db.records[id]) return;
-  db.records[id].status = patch.status;
-  if(patch.note) db.records[id].note = patch.note;
+  db.records[id].status = patch.status; if(patch.note) db.records[id].note = patch.note;
   saveDb(db); loadData();
 }
 
@@ -348,13 +288,11 @@ function renderStatus(){
     targets.forEach(c => expected.push({ id: `mgr|${m.code}|${c}`, role: m.role, name: m.role, target: c }));
   });
 
-  const db = getDb();
-  let doneCount = 0;
+  const db = getDb(); let doneCount = 0;
   const tbody = document.querySelector("#statusTable tbody"); tbody.innerHTML = "";
 
   expected.forEach(item => {
-    const isDone = !!db.records[item.id];
-    if(isDone) doneCount++;
+    const isDone = !!db.records[item.id]; if(isDone) doneCount++;
     let ops = "-";
     let statusHtml = isDone ? `<span class="badge approved">✓ دریافت شد</span>` : `<span class="badge missing">✕ نفرستاده</span>`;
     if(!isDone){
@@ -379,22 +317,16 @@ function renderList(){
     const badgeCls = r.status === "approved" ? "approved" : r.status === "rejected" ? "rejected" : "pending";
     const badgeTxt = r.status === "approved" ? "✓ تایید" : r.status === "rejected" ? "✕ رد" : "⏳ انتظار";
     const typeBadge = r.evaluator_type === "manager" ? `<span class="tag mgr">مدیر</span>` : `<span class="tag">رئیس</span>`;
-    let ops = r.status === "pending" 
-      ? `<button class="btn ok" onclick="approve('${esc(r.id)}')">✓</button> <button class="btn danger" onclick="reject('${esc(r.id)}')">✕</button>`
-      : `<button class="btn ghost" onclick="reopen('${esc(r.id)}')">بازگشایی</button>`;
+    let ops = r.status === "pending" ? `<button class="btn ok" onclick="approve('${esc(r.id)}')">✓</button> <button class="btn danger" onclick="reject('${esc(r.id)}')">✕</button>` : `<button class="btn ghost" onclick="reopen('${esc(r.id)}')">بازگشایی</button>`;
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${r.supervisor}</td><td>${typeBadge}</td><td>${r.workshopName || "—"}</td>
-      <td class="name">${r.contractor}</td><td>${new Date(r.timestamp).toLocaleString("fa-IR")}</td>
-      <td><b>${toFa(Number(r.total).toFixed(1))}</b></td>
-      <td><span class="badge ${badgeCls}">${badgeTxt}</span>${r.note?`<div class="hint">${r.note}</div>`:""}</td><td>${ops}</td>`;
+    tr.innerHTML = `<td>${r.supervisor}</td><td>${typeBadge}</td><td>${r.workshopName || "—"}</td><td class="name">${r.contractor}</td><td>${new Date(r.timestamp).toLocaleString("fa-IR")}</td><td><b>${toFa(Number(r.total).toFixed(1))}</b></td><td><span class="badge ${badgeCls}">${badgeTxt}</span>${r.note?`<div class="hint">${r.note}</div>`:""}</td><td>${ops}</td>`;
     tbody.appendChild(tr);
   });
 }
 
 function populateRankView(){
-  const sel = document.getElementById("rankView");
-  if(sel.options.length > 1) return;
+  const sel = document.getElementById("rankView"); if(sel.options.length > 1) return;
   CONFIG.workshops.forEach(w=>{ const o = document.createElement("option"); o.value = w.code; o.textContent = "🏗️ " + w.name; sel.appendChild(o); });
 }
 
@@ -436,25 +368,15 @@ function renderRank(){
   });
 }
 
-// ====== تحلیل عمیق (بر اساس ۱۷ زیرشاخه) ======
+// ====== تحلیل عمیق ======
 function renderAnalysis(){
   const agg = getAggregatedData();
   const projStats = document.getElementById("projStats");
   const container = document.getElementById("analysisContainer");
+  if(!agg.length) { projStats.innerHTML = "<div style='color:#6b7280'>داده‌ای برای تحلیل وجود ندارد.</div>"; container.innerHTML = ""; return; }
   
-  if(!agg.length) { 
-    projStats.innerHTML = "<div style='color:#6b7280'>داده‌ای برای تحلیل وجود ندارد.</div>"; 
-    container.innerHTML = ""; 
-    return; 
-  }
-  
-  // 1. آمار کلی پروژه
   let projAvg = { tech:0, contract:0, value:0, hr:0, total:0 };
-  agg.forEach(c => {
-    projAvg.tech += c.groups.tech; projAvg.contract += c.groups.contract;
-    projAvg.value += c.groups.value; projAvg.hr += c.groups.hr;
-    projAvg.total += c.avg;
-  });
+  agg.forEach(c => { projAvg.tech += c.groups.tech; projAvg.contract += c.groups.contract; projAvg.value += c.groups.value; projAvg.hr += c.groups.hr; projAvg.total += c.avg; });
   const N = agg.length;
   projStats.innerHTML = `
     <div class="proj-stat"><b>${toFa((projAvg.total/N).toFixed(1))}</b>میانگین کل</div>
@@ -464,37 +386,19 @@ function renderAnalysis(){
     <div class="proj-stat" style="background:#dcfce7; border-color:#bbf7d0"><b>${toFa((projAvg.hr/N).toFixed(1))}</b>نیروی انسانی</div>
   `;
 
-  // 2. تحلیل تک تک پیمانکاران
   container.innerHTML = "";
-  
   agg.forEach(c => {
-    // استخراج تمام ۱۷ آیتم و مرتب‌سازی بر اساس نمره
-    let allItemsArray = ALL_ITEMS.map(it => {
-      return { 
-        id: it.id, 
-        text: it.t, 
-        group: it.glabel,
-        score: c.items[it.id] !== undefined ? c.items[it.id] : 0 
-      };
-    }).sort((a,b) => b.score - a.score);
-
+    let allItemsArray = ALL_ITEMS.map(it => ({ id: it.id, text: it.t, group: it.glabel, score: c.items[it.id] !== undefined ? c.items[it.id] : 0 })).sort((a,b) => b.score - a.score);
     const top3 = allItemsArray.slice(0, 3);
-    const bottom3 = allItemsArray.slice(-3).reverse(); // ضعیف‌ترین‌ها
+    const bottom3 = allItemsArray.slice(-3).reverse();
 
-    // ساخت جدول ۱۷ زیرشاخه
     let subItemsHtml = `<div class="sub-items-grid">`;
     allItemsArray.forEach(it => {
       let scoreClass = it.score >= 80 ? "score-high" : (it.score >= 60 ? "score-mid" : "score-low");
-      subItemsHtml += `
-        <div class="sub-item-row">
-          <span class="sub-item-title">${it.text}</span>
-          <span class="sub-item-score ${scoreClass}">${toFa(it.score.toFixed(1))}</span>
-        </div>
-      `;
+      subItemsHtml += `<div class="sub-item-row"><span class="sub-item-title">${it.text}</span><span class="sub-item-score ${scoreClass}">${toFa(it.score.toFixed(1))}</span></div>`;
     });
     subItemsHtml += `</div>`;
 
-    // متن تحلیل
     let adviceText = `<div style="font-size:13px; margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
       <b style="color:#0d7a5f">🌟 ۳ نقطه قوت اصلی:</b> ${top3.map(i=>`${i.text} (${toFa(i.score.toFixed(0))})`).join("، ")}<br>
       <b style="color:#991b1b">⚠️ ۳ نقطه ضعف نیازمند توجه:</b> ${bottom3.map(i=>`${i.text} (${toFa(i.score.toFixed(0))})`).join("، ")}
@@ -502,29 +406,177 @@ function renderAnalysis(){
 
     let actionBox = "";
     if(bottom3[0].score < 60) {
-      actionBox = `<div class="msg warn" style="margin-top:15px; margin-bottom:0; font-size:12px">
-        <b>اقدام پیشنهادی مدیریت:</b> ضعیف‌ترین عملکرد این پیمانکار در بخش <b>«${bottom3[0].text}»</b> با نمره ${toFa(bottom3[0].score.toFixed(1))} است. پیشنهاد می‌شود جلسه‌ای اختصاصی برای رفع مشکلات این حوزه برگزار شود.
-      </div>`;
+      actionBox = `<div class="msg warn" style="margin-top:15px; margin-bottom:0; font-size:12px"><b>اقدام پیشنهادی مدیریت:</b> ضعیف‌ترین عملکرد این پیمانکار در بخش <b>«${bottom3[0].text}»</b> با نمره ${toFa(bottom3[0].score.toFixed(1))} است. پیشنهاد می‌شود جلسه‌ای اختصاصی برای رفع مشکلات این حوزه برگزار شود.</div>`;
     } else if(top3[0].score > 85) {
-      actionBox = `<div class="msg ok" style="margin-top:15px; margin-bottom:0; font-size:12px">
-        <b>پیام تشویقی:</b> عملکرد این پیمانکار در بخش <b>«${top3[0].text}»</b> بسیار درخشان بوده است. پیشنهاد می‌شود از تیم مربوطه تقدیر ویژه شود.
-      </div>`;
+      actionBox = `<div class="msg ok" style="margin-top:15px; margin-bottom:0; font-size:12px"><b>پیام تشویقی:</b> عملکرد این پیمانکار در بخش <b>«${top3[0].text}»</b> بسیار درخشان بوده است. پیشنهاد می‌شود از تیم مربوطه تقدیر ویژه شود.</div>`;
     }
 
     const box = document.createElement("div");
     box.className = "analysis-box";
     box.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f0f4f8; padding-bottom:10px; margin-bottom:15px">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f0f4f8; padding-bottom:10px; margin-bottom:15px; flex-wrap:wrap; gap:8px;">
         <b style="font-size:16px; color:#0f5c8c">${c.contractor}</b>
-        <span class="badge pending" style="background:#e6f4ee; color:#0d7a5f; font-size:13px;">امتیاز کل: ${toFa(c.avg.toFixed(1))} از ۱۰۰</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn print" onclick="printReportCard('${esc(c.contractor)}')">🖨️ چاپ کارنامه</button>
+          <span class="badge pending" style="background:#e6f4ee; color:#0d7a5f; font-size:13px;">امتیاز: ${toFa(c.avg.toFixed(1))}</span>
+        </div>
       </div>
       <div style="font-size:12px; color:#6b7280; margin-bottom:8px;">جزئیات نمرات به تفکیک ۱۷ زیرشاخه (از بالاترین تا پایین‌ترین):</div>
-      ${subItemsHtml}
-      ${adviceText}
-      ${actionBox}
-    `;
+      ${subItemsHtml}${adviceText}${actionBox}`;
     container.appendChild(box);
   });
+}
+
+// ====== چاپ کارنامه رسمی ======
+function printReportCard(contractorName) {
+  const agg = getAggregatedData();
+  const c = agg.find(x => x.contractor === contractorName);
+  if(!c) return alert("داده‌ای یافت نشد.");
+  
+  let allItemsArray = ALL_ITEMS.map(it => ({ id: it.id, text: it.t, group: it.glabel, score: c.items[it.id] !== undefined ? c.items[it.id] : 0 })).sort((a,b) => b.score - a.score);
+  const top3 = allItemsArray.slice(0, 3);
+  const bottom3 = allItemsArray.slice(-3).reverse();
+  const today = new Date().toLocaleDateString("fa-IR");
+  
+  const scoreColor = c.avg >= 80 ? '#15803d' : c.avg >= 60 ? '#b45309' : '#b91c1c';
+  const scoreBg = c.avg >= 80 ? '#dcfce7' : c.avg >= 60 ? '#fef3c7' : '#fee2e2';
+  
+  // تحلیل هوشمند
+  const groups = CRITERIA.map(g => ({ label: g.label, val: c.groups[g.key] || 0 })).sort((a,b) => a.val - b.val);
+  const weakestGroup = groups[0];
+  let summary = "";
+  if (c.avg >= 85) summary = "عملکرد کلی این پیمانکار <b>بسیار خوب</b> ارزیابی شده است.";
+  else if (c.avg >= 70) summary = "عملکرد کلی این پیمانکار <b>خوب</b> ارزیابی شده است.";
+  else if (c.avg >= 60) summary = "عملکرد کلی این پیمانکار <b>متوسط</b> ارزیابی شده و نیازمند بهبود است.";
+  else summary = "عملکرد کلی این پیمانکار <b>ضعیف</b> ارزیابی شده و نیازمند اقدام جدی است.";
+  
+  let advice = `<p style="margin:0 0 10px">${summary}</p>`;
+  if (weakestGroup.val < 65) advice += `<p style="margin:0 0 10px"><b>حوزه نیازمند توجه فوری:</b> «${weakestGroup.label}» با امتیاز ${toFa(weakestGroup.val.toFixed(1))} از ۱۰۰ پایین‌ترین عملکرد را داشته است.</p>`;
+  advice += `<p style="margin:0 0 10px"><b>پیشنهاد برای بهبود:</b> تمرکز اصلی بر رفع چالش‌های «${bottom3[0].text}» و «${bottom3[1].text}» باشد.</p>`;
+  if (c.avg >= 80) advice += `<p style="margin:0"><b>تشویق:</b> به دلیل عملکرد درخشان در «${top3[0].text}»، شایسته تقدیر است.</p>`;
+
+  const win = window.open("", "_blank");
+  win.document.write(`
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+      <meta charset="utf-8">
+      <title>کارنامه - ${contractorName}</title>
+      <style>
+        @page { size: A4; margin: 15mm; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        body { font-family: "Vazirmatn", "IRANSans", Tahoma, sans-serif; color: #1f2937; margin: 0; padding: 20px; line-height: 1.8; font-size: 13px; }
+        .header { text-align: center; border-bottom: 3px solid #0f5c8c; padding-bottom: 15px; margin-bottom: 20px; }
+        .header h1 { margin: 0 0 8px; color: #0f5c8c; font-size: 22px; }
+        .header p { margin: 0; color: #6b7280; font-size: 13px; }
+        .meta-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+        .meta-table td { padding: 8px; border: 1px solid #e2e8f0; font-size: 13px; }
+        .meta-table td:first-child, .meta-table td:nth-child(3) { background: #f0f6fb; font-weight: bold; width: 22%; color: #0f5c8c; }
+        .score-banner { text-align: center; padding: 20px; border-radius: 12px; margin-bottom: 25px; background: ${scoreBg}; border: 2px solid ${scoreColor}; }
+        .score-banner .num { font-size: 48px; font-weight: bold; color: ${scoreColor}; line-height: 1; }
+        .score-banner .lbl { font-size: 14px; color: #4b5563; margin-top: 6px; }
+        .section-title { background: #0f5c8c; color: white; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin: 25px 0 12px; }
+        .cat-row { display: flex; align-items: center; margin-bottom: 10px; }
+        .cat-label { width: 140px; font-weight: bold; font-size: 13px; }
+        .cat-bar-bg { flex: 1; height: 14px; background: #e5e7eb; border-radius: 7px; overflow: hidden; margin: 0 12px; }
+        .cat-bar-fill { height: 100%; background: linear-gradient(90deg, #0f5c8c, #0d7a5f); }
+        .cat-score { width: 60px; text-align: center; font-weight: bold; color: #0f5c8c; }
+        table.detail-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        table.detail-table th { background: #f0f4f8; color: #0f5c8c; padding: 8px; border: 1px solid #e2e8f0; }
+        table.detail-table td { padding: 6px 10px; border: 1px solid #e2e8f0; }
+        table.detail-table td.score { text-align: center; font-weight: bold; width: 70px; }
+        .s-high { color: #15803d; background: #dcfce7; }
+        .s-mid { color: #b45309; background: #fef3c7; }
+        .s-low { color: #b91c1c; background: #fee2e2; }
+        .strength-box, .weakness-box { padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .strength-box { background: #dcfce7; border-right: 4px solid #15803d; }
+        .weakness-box { background: #fee2e2; border-right: 4px solid #b91c1c; }
+        .strength-box ol, .weakness-box ol { margin: 0; padding-right: 20px; }
+        .strength-box li, .weakness-box li { margin-bottom: 4px; font-size: 13px; }
+        .recommendation { background: #fef3c7; border-right: 4px solid #d97706; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 15px; }
+        .signature { margin-top: 40px; display: flex; justify-content: space-between; padding-top: 15px; border-top: 1px dashed #9ca3af; }
+        .signature div { width: 45%; text-align: center; font-size: 12px; }
+        .signature .line { border-bottom: 1px solid #374151; height: 60px; margin-bottom: 6px; }
+        .footer { text-align: center; color: #6b7280; font-size: 11px; margin-top: 30px; padding-top: 15px; border-top: 1px solid #e5e7eb; }
+        .no-print { text-align: center; margin-bottom: 20px; padding: 12px; background: #eff6ff; border-radius: 8px; }
+        .no-print button { padding: 10px 24px; background: #0f5c8c; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; }
+        @media print { .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="no-print">
+        <button onclick="window.print()">🖨️ چاپ کارنامه / ذخیره PDF</button>
+      </div>
+      
+      <div class="header">
+        <h1>کارنامه عملکرد پیمانکار</h1>
+        <p>مدیریت نظارت و بازرسی نمایندگی — سامانه ارزیابی عملکرد پیمانکاران</p>
+      </div>
+      
+      <table class="meta-table">
+        <tr>
+          <td>نام پیمانکار</td><td><b>${contractorName}</b></td>
+          <td>تاریخ گزارش</td><td>${today}</td>
+        </tr>
+        <tr>
+          <td>کارگاه(های) مربوطه</td><td colspan="3">${c.workshops.join(" ، ") || "ویژه (بدون کارگاه)"}</td>
+        </tr>
+        <tr>
+          <td>تعداد ارزیابی‌ها</td><td>${toFa(c.n)} ارزیابی تاییدشده</td>
+          <td>تعداد شاخص‌ها</td><td>${toFa(ALL_ITEMS.length)} شاخص</td>
+        </tr>
+      </table>
+      
+      <div class="score-banner">
+        <div class="num">${toFa(c.avg.toFixed(2))}</div>
+        <div class="lbl">امتیاز کل از ۱۰۰</div>
+      </div>
+      
+      <div class="section-title">📊 عملکرد کلی در ۴ حوزه اصلی</div>
+      ${CRITERIA.map(g => {
+        const val = c.groups[g.key] || 0;
+        return `<div class="cat-row"><div class="cat-label">${g.label}</div><div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${val}%"></div></div><div class="cat-score">${toFa(val.toFixed(1))}</div></div>`;
+      }).join("")}
+      
+      <div class="section-title">📋 جزئیات امتیازات در ۱۷ زیرشاخه</div>
+      <table class="detail-table">
+        <thead><tr><th>حوزه</th><th>شاخص ارزیابی</th><th>امتیاز</th></tr></thead>
+        <tbody>
+          ${CRITERIA.map(g => g.items.map((it, idx) => {
+            const s = c.items[it.id] || 0;
+            const cls = s >= 80 ? "s-high" : s >= 60 ? "s-mid" : "s-low";
+            return `<tr>${idx === 0 ? `<td rowspan="${g.items.length}" style="background:#f8fafc; font-weight:bold; text-align:center; vertical-align:middle">${g.label}</td>` : ""}<td>${it.t}</td><td class="score ${cls}">${toFa(s.toFixed(1))}</td></tr>`;
+          }).join("")).join("")}
+        </tbody>
+      </table>
+      
+      <div class="section-title">🌟 نقاط قوت</div>
+      <div class="strength-box">
+        <ol>${top3.map((it, i) => `<li><b>${it.text}</b> — امتیاز ${toFa(it.score.toFixed(1))} از ۱۰۰</li>`).join("")}</ol>
+      </div>
+      
+      <div class="section-title">⚠️ نقاط قابل بهبود</div>
+      <div class="weakness-box">
+        <ol>${bottom3.map((it, i) => `<li><b>${it.text}</b> — امتیاز ${toFa(it.score.toFixed(1))} از ۱۰۰</li>`).join("")}</ol>
+      </div>
+      
+      <div class="section-title">💡 جمع‌بندی و توصیه مدیریتی</div>
+      <div class="recommendation">${advice}</div>
+      
+      <div class="signature">
+        <div><div class="line"></div><div>مهر و امضای مدیریت نظارت و بازرسی نمایندگی</div></div>
+        <div><div class="line"></div><div>مهر و امضای پیمانکار (جهت اطلاع)</div></div>
+      </div>
+      
+      <div class="footer">
+        این کارنامه بر اساس ${toFa(c.n)} ارزیابی تاییدشده از سوی رؤسای کارگاه و مدیران پروژه تهیه شده است.<br>
+        تاریخ تولید گزارش: ${today} — سامانه ارزیابی عملکرد پیمانکاران
+      </div>
+    </body>
+    </html>
+  `);
+  win.document.close();
+  setTimeout(() => { try { win.print(); } catch(e){} }, 800);
 }
 
 function exportRankCSV(){
@@ -536,10 +588,7 @@ function exportRankCSV(){
 }
 
 function clearAllData(){
-  if(confirm("آیا مطمئن هستید؟ تمام اطلاعات پاک می‌شوند.")){
-    localStorage.removeItem(LS_DB);
-    loadData();
-  }
+  if(confirm("آیا مطمئن هستید؟ تمام اطلاعات پاک می‌شوند.")){ localStorage.removeItem(LS_DB); loadData(); }
 }
 
 function switchTab(name){
