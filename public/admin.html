@@ -168,7 +168,7 @@
 <script>
 // 👇 این دو خط را با اطلاعات خودتان پر کنید 👇
 const SUPABASE_URL = "https://kcsakpgcuodbzdacshe.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzY3Nha3BnY3VvZGJ6ZGFjc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5OTczNzQsImV4cCI6MjEwODU3MzM3NH0.yMBohZK2oEBgStPzhoCZ9IUSdTLzIg9YSGTXGCHDcUk"; // 👈 کلید طولانی که با eyJ شروع می‌شود را اینجا پیست کنید
+const SUPABASE_KEY = "YOUR_ANON_KEY_HERE"; // 👈 کلید طولانی که با eyJ شروع می‌شود را اینجا پیست کنید
 
 const ADMIN_PASSWORD = "admin-1404"; 
 const LS_DB = "pc_admin_db_v3";
@@ -494,12 +494,212 @@ function renderAnalysis(){
   });
 }
 
+// ====== چاپ کارنامه تک‌صفحه‌ای، گرافیکی و سه امضا (کد کامل بازگردانده شد) ======
 function printReportCard(contractorName) {
-  // همان کد چاپ کارنامه قبلی
-  const agg = getAggregatedData(); const c = agg.find(x => x.contractor === contractorName); if(!c) return;
+  const agg = getAggregatedData();
+  const c = agg.find(x => x.contractor === contractorName);
+  if(!c) return alert("داده‌ای یافت نشد.");
+  
+  let allItemsArray = ALL_ITEMS.map(it => ({ id: it.id, text: it.t, group: it.glabel, score: c.items[it.id] !== undefined ? c.items[it.id] : 0 })).sort((a,b) => b.score - a.score);
+  const top3 = allItemsArray.slice(0, 3);
+  const bottom3 = allItemsArray.slice(-3).reverse();
+  const today = new Date().toLocaleDateString("fa-IR");
+  
+  const scoreColor = c.avg >= 80 ? '#15803d' : c.avg >= 60 ? '#b45309' : '#b91c1c';
+  const scoreBg = c.avg >= 80 ? '#dcfce7' : c.avg >= 60 ? '#fef3c7' : '#fee2e2';
+  
+  const groups = CRITERIA.map(g => ({ label: g.label, val: c.groups[g.key] || 0 })).sort((a,b) => a.val - b.val);
+  const weakestGroup = groups[0];
+  let summary = "";
+  if (c.avg >= 85) summary = "عملکرد کلی این پیمانکار <b>بسیار خوب</b> ارزیابی شده است.";
+  else if (c.avg >= 70) summary = "عملکرد کلی این پیمانکار <b>خوب</b> ارزیابی شده است.";
+  else if (c.avg >= 60) summary = "عملکرد کلی این پیمانکار <b>متوسط</b> ارزیابی شده و نیازمند بهبود است.";
+  else summary = "عملکرد کلی این پیمانکار <b>ضعیف</b> ارزیابی شده و نیازمند اقدام جدی است.";
+  
+  let advice = `<p style="margin:0 0 6px">${summary}</p>`;
+  if (weakestGroup.val < 65) advice += `<p style="margin:0 0 6px"><b>حوزه نیازمند توجه:</b> «${weakestGroup.label}» با امتیاز ${toFa(weakestGroup.val.toFixed(1))} ضعیف‌ترین بخش است.</p>`;
+  advice += `<p style="margin:0 0 6px"><b>پیشنهاد برای بهبود:</b> تمرکز بر رفع چالش‌های «${bottom3[0].text}» و «${bottom3[1].text}».</p>`;
+  if (c.avg >= 80) advice += `<p style="margin:0"><b>تشویق:</b> شایسته تقدیر به دلیل عملکرد درخشان در «${top3[0].text}».</p>`;
+
+  let detailTableRows = "";
+  const half = Math.ceil(ALL_ITEMS.length / 2);
+  for (let i = 0; i < half; i++) {
+    const it1 = ALL_ITEMS[i];
+    const it2 = ALL_ITEMS[i + half];
+    const s1 = c.items[it1.id] || 0;
+    const cls1 = s1 >= 80 ? "s-high" : s1 >= 60 ? "s-mid" : "s-low";
+    let rowHtml = `<tr><td>${it1.t}</td><td class="score ${cls1}">${toFa(s1.toFixed(1))}</td>`;
+    if (it2) {
+      const s2 = c.items[it2.id] || 0;
+      const cls2 = s2 >= 80 ? "s-high" : s2 >= 60 ? "s-mid" : "s-low";
+      rowHtml += `<td>${it2.t}</td><td class="score ${cls2}">${toFa(s2.toFixed(1))}</td></tr>`;
+    } else {
+      rowHtml += `<td colspan="2"></td></tr>`;
+    }
+    detailTableRows += rowHtml;
+  }
+
   const win = window.open("", "_blank");
-  win.document.write(`<html dir="rtl"><body><h2 style="text-align:center;color:#0f5c8c;">کارنامه ${contractorName}</h2><p style="text-align:center">امتیاز: ${c.avg}</p><br><button onclick="window.print()">چاپ</button></body></html>`);
+  win.document.write(`
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+      <meta charset="utf-8">
+      <title>کارنامه - ${contractorName}</title>
+      <style>
+        @page { size: A4 portrait; margin: 5mm; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        body { 
+          font-family: "Vazirmatn", "IRANSans", Tahoma, sans-serif; 
+          color: #1f2937; margin: 0; padding: 0; line-height: 1.4; font-size: 11px; 
+          background: #fff;
+        }
+        .page-border { 
+          border: 3px solid #0f5c8c; 
+          border-radius: 12px; 
+          padding: 15px; 
+          height: 287mm;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 12px; }
+        .header-title h1 { margin: 0; color: #0f5c8c; font-size: 20px; }
+        .header-title p { margin: 2px 0 0; color: #6b7280; font-size: 11px; }
+        .header-logo { width: 50px; height: 50px; background: #e6f4ee; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        
+        .meta-table { width: 100%; margin-bottom: 12px; border-collapse: collapse; }
+        .meta-table td { padding: 4px 8px; border: 1px solid #e2e8f0; font-size: 11px; }
+        .meta-table td.label { background: #f0f6fb; font-weight: bold; color: #0f5c8c; width: 15%; }
+        
+        .main-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 12px; }
+        
+        .score-box { 
+          background: ${scoreBg}; 
+          border: 2px solid ${scoreColor}; 
+          border-radius: 12px; 
+          text-align: center; 
+          padding: 15px 10px; 
+          display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .score-box .num { font-size: 42px; font-weight: 900; color: ${scoreColor}; line-height: 1; }
+        .score-box .lbl { font-size: 12px; color: #4b5563; margin-top: 5px; font-weight: bold; }
+        
+        .bars-box { display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+        .cat-row { display: flex; align-items: center; }
+        .cat-label { width: 110px; font-weight: bold; font-size: 11px; color: #374151; }
+        .cat-bar-bg { flex: 1; height: 10px; background: #e5e7eb; border-radius: 5px; overflow: hidden; margin: 0 10px; }
+        .cat-bar-fill { height: 100%; background: linear-gradient(90deg, #0f5c8c, #0d7a5f); border-radius: 5px; }
+        .cat-score { width: 40px; text-align: left; font-weight: bold; color: #0f5c8c; font-size: 11px; }
+        
+        .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .box { padding: 10px; border-radius: 8px; }
+        .box h3 { margin: 0 0 6px; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 4px; }
+        .box.strength { background: #dcfce7; border-right: 4px solid #15803d; }
+        .box.weakness { background: #fee2e2; border-right: 4px solid #b91c1c; }
+        .box ul { margin: 0; padding-right: 15px; font-size: 11px; }
+        .box li { margin-bottom: 3px; }
+        
+        .details-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 12px; }
+        .details-table th { background: #f0f4f8; color: #0f5c8c; padding: 4px; border: 1px solid #e2e8f0; text-align: center; }
+        .details-table td { padding: 3px 6px; border: 1px solid #e2e8f0; }
+        .details-table td.score { text-align: center; font-weight: bold; width: 40px; }
+        .s-high { color: #15803d; background: #f0fdf4; }
+        .s-mid { color: #b45309; background: #fffbeb; }
+        .s-low { color: #b91c1c; background: #fef2f2; }
+        
+        .recommendation { background: #fef3c7; border-right: 4px solid #d97706; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 12px; }
+        
+        /* بخش امضاها - با فاصله استاندارد */
+        .signature { display: flex; justify-content: space-between; margin-top: 30px; margin-bottom: 40px; gap: 10px; }
+        .signature div { flex: 1; text-align: center; font-size: 11px; font-weight: bold; color: #374151; }
+        .signature .line { border-bottom: 1px dashed #374151; height: 40px; margin-bottom: 5px; }
+        
+        .footer { text-align: center; color: #6b7280; font-size: 9px; position: absolute; bottom: 10px; left: 0; right: 0; }
+        
+        .no-print { text-align: center; margin-bottom: 10px; }
+        .no-print button { padding: 8px 20px; background: #0f5c8c; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; }
+        @media print { .no-print { display: none; } body { padding: 0; } .page-border { height: 100%; min-height: 287mm; } }
+      </style>
+    </head>
+    <body>
+      <div class="no-print">
+        <button onclick="window.print()">🖨️ چاپ کارنامه / ذخیره PDF</button>
+      </div>
+      
+      <div class="page-border">
+        <div class="header">
+          <div class="header-title">
+            <h1>کارنامه رسمی عملکرد پیمانکار</h1>
+            <p>مدیریت نظارت و بازرسی نمایندگی — سامانه ارزیابی عملکرد</p>
+          </div>
+          <div class="header-logo">🏆</div>
+        </div>
+        
+        <table class="meta-table">
+          <tr>
+            <td class="label">نام پیمانکار</td><td><b>${contractorName}</b></td>
+            <td class="label">تاریخ گزارش</td><td>${today}</td>
+          </tr>
+          <tr>
+            <td class="label">کارگاه(ها)</td><td colspan="3">${c.workshops.join(" ، ") || "ویژه (بدون کارگاه)"}</td>
+          </tr>
+          <tr>
+            <td class="label">تعداد ارزیابی</td><td>${toFa(c.n)} ارزیابی تاییدشده</td>
+            <td class="label">شاخص‌ها</td><td>${toFa(ALL_ITEMS.length)} شاخص</td>
+          </tr>
+        </table>
+        
+        <div class="main-grid">
+          <div class="score-box">
+            <div class="num">${toFa(c.avg.toFixed(2))}</div>
+            <div class="lbl">امتیاز کل از ۱۰۰</div>
+          </div>
+          <div class="bars-box">
+            ${CRITERIA.map(g => {
+              const val = c.groups[g.key] || 0;
+              return `<div class="cat-row"><div class="cat-label">${g.label}</div><div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${val}%"></div></div><div class="cat-score">${toFa(val.toFixed(1))}</div></div>`;
+            }).join("")}
+          </div>
+        </div>
+        
+        <div class="pros-cons-grid">
+          <div class="box strength">
+            <h3>🌟 نقاط قوت اصلی</h3>
+            <ul>${top3.map(it => `<li><b>${it.text}</b> (${toFa(it.score.toFixed(1))})</li>`).join("")}</ul>
+          </div>
+          <div class="box weakness">
+            <h3>⚠️ نقاط قابل بهبود</h3>
+            <ul>${bottom3.map(it => `<li><b>${it.text}</b> (${toFa(it.score.toFixed(1))})</li>`).join("")}</ul>
+          </div>
+        </div>
+        
+        <div style="font-size:11px; font-weight:bold; color:#0f5c8c; margin-bottom:4px;">📋 جزئیات امتیازات ۱۷ زیرشاخه:</div>
+        <table class="details-table">
+          <thead><tr><th>شاخص ارزیابی</th><th>امتیاز</th><th>شاخص ارزیابی</th><th>امتیاز</th></tr></thead>
+          <tbody>${detailTableRows}</tbody>
+        </table>
+        
+        <div class="recommendation">
+          <b>💡 جمع‌بندی مدیریتی:</b> ${advice}
+        </div>
+        
+        <!-- سه امضا -->
+        <div class="signature">
+          <div><div class="line"></div><div>مدیریت نظارت و بازرسی</div></div>
+          <div><div class="line"></div><div>مسئول نمایندگی</div></div>
+          <div><div class="line"></div><div>مدیر پروژه</div></div>
+        </div>
+        
+        <div class="footer">
+          این کارنامه بر اساس ${toFa(c.n)} ارزیابی تاییدشده تهیه شده است. تاریخ تولید: ${today}
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
   win.document.close();
+  setTimeout(() => { try { win.print(); } catch(e){} }, 800);
 }
 
 function exportRankCSV(){
